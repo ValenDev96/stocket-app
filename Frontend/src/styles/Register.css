@@ -1,0 +1,63 @@
+.body{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/public/img/Home/empanadas_Login.avif');
+     background-repeat: no-repeat;
+     background-size: cover;
+    background-position: center;
+    text-align: center;
+    padding: 20px;
+}
+.register-form-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: rgba(82, 79, 79, 0.274);
+  }
+  
+  h2.titulo-register-form {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffff;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+    color: #ffff;
+  }
+  
+  label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  input,
+  select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .button-form-register {
+    width: 100%;
+    padding: 10px;
+    background-color:  #834e00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  
+  button-form-register:hover {
+    background-color:  #834e00;
+  }
+  

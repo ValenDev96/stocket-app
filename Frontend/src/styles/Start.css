@@ -1,0 +1,48 @@
+.start-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/public/img/Home/empanadas_Login.avif');
+     background-repeat: no-repeat;
+     background-size: cover;
+    background-position: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.cardStart {
+    background-color:rgba(255, 255, 255, 0.274);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 350px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.button-group button {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #834e00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+h2.titlePanel{
+  color: #ffff;
+}
+
+.alert {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #834e00;
+}

@@ -1,0 +1,83 @@
+/* App.css */
+
+/* Contenedor principal para centrar el contenido */
+.welcome-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/public/img/Home/empanadas_Login.avif');
+     background-repeat: no-repeat;
+     background-size: cover;
+    background-position: center;
+    text-align: center;
+    padding: 20px;
+  }
+.cards {
+    background-color: rgba(82, 79, 79, 0.274);
+  padding: 40px;
+  border-radius: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+  /*columna botones*/
+  display: flex;
+  flex-direction: column;
+}
+
+  
+  /* Estilo para el título */
+  h2.titulo{
+    font-size: 2rem;
+    color: #ffffff; /* Color oscuro para el título */
+    margin-bottom: 10px;
+  }
+  
+  /* Estilo para el párrafo */
+  p {
+    font-size: 1.2rem;
+    color: #ffffff; /* Color de texto más suave */
+    margin-bottom: 30px;
+  }
+  
+  /* Estilos para los botones */
+ 
+  button{
+    width: 200px;
+    padding: 5px 5px;
+    border: none;
+
+
+  }
+  /* Botón primario */
+  .boton_inicio {
+    background-color: #834e00;
+    margin:5px auto;
+    border-radius: 10px;  
+    color: white;
+  
+    
+  }
+  
+  /* Botón secundario */
+  .boton_registro{
+    background-color: #834e00;
+    margin:  5px auto;
+    border-radius: 10px;  /* Verde */
+    color: white;
+  }
+  
+  /* Efecto al pasar el mouse sobre los botones */
+  button:hover {
+    opacity: 0.8; /* Efecto de transparencia al pasar el ratón */
+  }
+  .logoEM {
+    width: 130px;
+    height: auto;
+    margin: 0 auto 20px auto;
+    margin-bottom: 20px;
+    border-radius: 10px; /* opcional: si quieres que tenga esquinas redondeadas */
+  }
+  

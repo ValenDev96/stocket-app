@@ -1,0 +1,76 @@
+/* Estilos para Login */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-image: url('/public/img/Home/empanadas_Login.avif');
+     background-repeat: no-repeat;
+     background-size: cover;
+    background-position: center;
+    text-align: center;
+    padding: 20px;
+}
+  
+  .login-card {
+    background-color:rgba(255, 255, 255, 0.274);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 350px;
+  }
+  
+  .login-card h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: rgb(255, 245, 245);
+  }
+  
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: #ffffff;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .login-button-int {
+    width: 100%;
+    padding: 0.75rem;
+    background-color: #834e00;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .login-button-int:hover {
+    background-color: #834e00;
+  }
+  
+  .forgot-password {
+    text-align: center;
+    margin-top: 1rem;
+  }
+  
+  .forgot-password a {
+    color: #ffe3ba;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+  
+  .forgot-password a:hover {
+    text-decoration: underline;
+  }
+  
