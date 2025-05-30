@@ -5,7 +5,10 @@ require('dotenv').config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://172.24.16.1:3001', // puerto del frontend
+  credentials: true,
+}));
 app.use(express.json());
 
 // Rutas

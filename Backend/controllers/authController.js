@@ -1,11 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
-//hola
+
 // Función para el registro de nuevos usuarios
 exports.register = async (req, res) => {
   
-  const { nombre_usuario, apellido, email, password, rol_id,empleado_id } = req.body; // Ajusta los nombres según tu formulario
+  const { nombre_usuario, apellido, email, password, rol_id,empleado_id } = req.body; 
   
   try {
     console.log('Datos recibidos en registro:', req.body);
@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
 
     // Crear un token JWT para el usuario recién registrado (opcional)
     const token = jwt.sign(
-      { id: userId, email: email, rol_id: role_id || 2 }, // Ajusta la información del payload
+      { id: userId, email: email, rol_id: rol_id || 2 }, // Ajusta la información del payload
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
@@ -53,7 +53,9 @@ exports.register = async (req, res) => {
 
  } catch (error) {
   console.error('Error al registrar usuario:', error);
-  res.status(500).json({ message: 'Error al registrar usuario' });
+  res.status(500).json({ 
+    message: 'Error al registrar usuario',
+    error: error.me});
 }
 };
 
