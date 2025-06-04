@@ -18,7 +18,7 @@ const Start = () => {
   };
 
   return (
-    <div className="start-container">
+    <div classNaDaeme="start-container">
       <div className="cardStart">
         <img src="/img/Home/logoEM.jpg" alt="Logo Empanadas Emanuel" className="logoEM" />
         <h2 className='titlePanel'>Panel Principal</h2>

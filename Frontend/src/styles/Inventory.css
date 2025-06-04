@@ -1,24 +1,266 @@
-.inventario-container {
-  padding: 2rem;
-  font-family: Arial, sans-serif;
+/* Frontend/src/styles/Inventory.css */
+
+/* Contenedor principal del módulo de gestión de materias primas */
+.gestion-materias-primas-container {
+  padding: 20px;
+  background-color: #fff; /* Fondo blanco para la sección principal del módulo */
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  margin: 20px auto; /* Centra y añade margen si está dentro de otro contenedor */
+  max-width: 1200px; /* Limita el ancho máximo */
 }
 
-.inventario-tabla {
+.gmp-title {
+  color: #2c3e50; /* Similar al título del dashboard */
+  font-size: 1.8em;
+  font-weight: 600;
+  margin-bottom: 25px;
+  text-align: center;
+  border-bottom: 2px solid #3498db; /* Línea azul debajo del título */
+  padding-bottom: 10px;
+}
+
+.gmp-add-button {
+  background-color: #3498db; /* Azul principal */
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+  display: block; /* Hace que ocupe su propia línea */
+  margin-bottom: 25px; /* Espacio antes del formulario o la lista */
+}
+
+.gmp-add-button:hover {
+  background-color: #2980b9; /* Azul más oscuro */
+}
+
+/* Estilos para el formulario de Materia Prima */
+.materia-prima-form {
+  background-color: #f9f9f9; /* Un fondo ligeramente diferente para el formulario */
+  padding: 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.form-title-mpf {
+  font-size: 1.4em;
+  color: #34495e;
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
+.form-group-mpf {
+  margin-bottom: 18px;
+}
+
+.form-group-mpf label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+}
+
+.form-group-mpf input[type="text"],
+.form-group-mpf input[type="number"],
+.form-group-mpf input[type="date"],
+.form-group-mpf select {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box; /* Importante para que el padding no aumente el ancho total */
+  font-size: 0.95em;
 }
 
-.inventario-tabla th, .inventario-tabla td {
-  border: 1px solid #ccc;
-  padding: 0.75rem;
+.form-group-mpf input:focus,
+.form-group-mpf select:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+  outline: none;
+}
+
+.form-buttons-mpf {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px; /* Espacio entre botones */
+}
+
+.form-buttons-mpf button {
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.form-buttons-mpf button[type="submit"] {
+  background-color: #2ecc71; /* Verde para guardar/actualizar */
+  color: white;
+}
+
+.form-buttons-mpf button[type="submit"]:hover {
+  background-color: #27ae60;
+}
+
+.form-buttons-mpf button[type="button"] { /* Botón Cancelar */
+  background-color: #e0e0e0; /* Gris claro */
+  color: #333;
+}
+
+.form-buttons-mpf button[type="button"]:hover {
+  background-color: #bdbdbd;
+}
+
+.error-message-form, .success-message-form {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.error-message-form {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.success-message-form {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+
+/* Estilos para la lista/tabla de Materias Primas */
+.materias-primas-list {
+  margin-top: 20px;
+}
+
+.mpl-title {
+  font-size: 1.4em;
+  color: #34495e;
+  margin-bottom: 15px;
+}
+
+.mpl-table {
+  width: 100%;
+  border-collapse: collapse; /* Bordes de tabla unidos */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.mpl-table th,
+.mpl-table td {
+  border: 1px solid #e0e0e0; /* Bordes más suaves */
+  padding: 12px 15px; /* Más padding */
   text-align: left;
+  font-size: 0.95em;
 }
 
-.inventario-tabla th {
-  background-color: #f4f4f4;
+.mpl-table th {
+  background-color: #f2f5f7; /* Un gris muy claro para cabeceras de tabla */
+  color: #34495e;
+  font-weight: 600;
+  text-transform: uppercase; /* Opcional: mayúsculas para cabeceras */
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
 }
 
-.inventario-tabla tr:hover {
+.mpl-table tbody tr:nth-child(even) {
+  background-color: #f9fafb; /* Rayado suave para filas pares */
+}
+
+.mpl-table tbody tr:hover {
+  background-color: #f0f4f8; /* Color al pasar el mouse */
+}
+
+.mpl-actions button {
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85em;
+  border: none;
+  margin-right: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.mpl-actions button.edit-btn {
+  background-color: #f39c12; /* Naranja para editar */
+  color: white;
+}
+.mpl-actions button.edit-btn:hover {
+  background-color: #e67e22;
+}
+
+.mpl-actions button.delete-btn {
+  background-color: #e74c3c; /* Rojo para eliminar */
+  color: white;
+}
+.mpl-actions button.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+.no-data-message-mpl, .loading-message-gmp, .error-message-gmp {
+  padding: 15px;
+  text-align: center;
+  color: #555;
   background-color: #f9f9f9;
+  border-radius: 4px;
+  margin-top: 20px;
+}
+.error-message-gmp {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Adaptaciones para pantallas pequeñas */
+@media (max-width: 768px) {
+  .gestion-materias-primas-container {
+    padding: 15px;
+    margin: 10px;
+  }
+  .gmp-title {
+    font-size: 1.5em;
+  }
+  .mpl-table, .mpl-table tbody, .mpl-table tr, .mpl-table td {
+    display: block; /* Transforma la tabla en bloques para móviles */
+    width: 100%;
+  }
+  .mpl-table thead {
+    display: none; /* Oculta cabeceras tradicionales en móviles */
+  }
+  .mpl-table tr {
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+  }
+  .mpl-table td {
+    text-align: right; /* Alinea el texto a la derecha */
+    padding-left: 50%; /* Deja espacio para la pseudo-etiqueta */
+    position: relative;
+    border: none;
+    border-bottom: 1px solid #eee;
+  }
+  .mpl-table td:before {
+    content: attr(data-label); /* Usa el data-label como etiqueta */
+    position: absolute;
+    left: 10px;
+    width: calc(50% - 20px); /* Ancho de la etiqueta */
+    padding-right: 10px;
+    white-space: nowrap;
+    text-align: left;
+    font-weight: bold;
+  }
+  .mpl-table td:last-child {
+    border-bottom: 0;
+  }
+  .mpl-actions button {
+    display: inline-block;
+    margin-bottom: 5px;
+  }
 }

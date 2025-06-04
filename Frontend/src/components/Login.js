@@ -12,34 +12,42 @@ const Login = () => {
 
   const handleLogin = async (e) => {
   e.preventDefault();
+  setErrorMessage(''); // Limpiar errores previos
 
   const loginData = {
-    nombre_usuario: email, // el backend espera "nombre_usuario"
+    email: email, // <--- CORREGIDO: Enviar 'email'
     contrasena: password,
   };
 
   try {
+    // Asegúrate que el puerto aquí (3000) es donde realmente corre tu backend
     const response = await axios.post('http://localhost:3000/api/auth/login', loginData);
 
     const { token, usuario } = response.data;
-
-    // Guardar token y usuario en localStorage
     localStorage.setItem('token', token);
     localStorage.setItem('usuario', JSON.stringify(usuario));
 
-    // Redirigir dependiendo del rol
     if (usuario.rol_id === 1) {
-      navigate('/admin');
+      navigate('/Dashboard');
     } else if (usuario.rol_id === 2) {
-      navigate('/vendedor');
+      navigate('/Dashboard');
     } else {
-      navigate('/Start');
+      navigate('/Dashboard');
     }
   } catch (error) {
     if (error.response) {
-      setErrorMessage(error.response.data.message || 'Error desconocido');
+      // El servidor respondió con un estado fuera del rango 2xx
+      setErrorMessage(error.response.data.message || 'Error en el login desde el servidor');
+      console.error('Error data:', error.response.data);
+      console.error('Error status:', error.response.status);
+    } else if (error.request) {
+      // La solicitud se hizo pero no se recibió respuesta
+      setErrorMessage('No se pudo conectar con el servidor. ¿Está encendido?');
+      console.error('Error request:', error.request);
     } else {
-      setErrorMessage('Error de conexión con el servidor');
+      // Algo más causó el error
+      setErrorMessage('Ocurrió un error al intentar iniciar sesión.');
+      console.error('Error message:', error.message);
     }
   }
 };
@@ -50,30 +58,35 @@ const Login = () => {
         <h2>Iniciar Sesión</h2>
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label htmlFor="email">Correo Electrónico</label>
-            <input
-              autoFocus
-              autoComplete="email"
-              type="email"
-              id="email"
-              placeholder="Ingresa tu correo"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          <label htmlFor="email">Correo Electrónico</label>
+          <input
+            autoFocus
+            autoComplete="email"
+            type="email"
+            id="email"
+            placeholder="Ingresa tu correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            title="Debe ser un correo válido. Ejemplo: usuario@dominio.com"
+          />
           </div>
 
+
           <div className="form-group">
-            <label htmlFor="password">Contraseña</label>
-            <input
-              type="password"
-              id="password"
-              placeholder="Ingresa tu contraseña"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+          <label htmlFor="password">Contraseña</label>
+          <input
+            type="password"
+            id="password"
+            placeholder="Ingresa tu contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            pattern=".{6,20}"
+            title="Debe tener entre 6 y 20 caracteres."
+          />
           </div>
+
 
           <button type="submit" className="login-button-int">Iniciar Sesión</button>
         </form>

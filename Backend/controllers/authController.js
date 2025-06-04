@@ -1,15 +1,15 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
-//hola
+
 // Función para el registro de nuevos usuarios
 exports.register = async (req, res) => {
   
-  const { nombre_usuario, apellido, email, password, rol_id,empleado_id } = req.body; // Ajusta los nombres según tu formulario
+  const { nombre_usuario, apellido, email, password, rol_id, empleado_id } = req.body; // Ajusta los nombres según tu formulario
   
   try {
     console.log('Datos recibidos en registro:', req.body);
-    // Verificar si el usuario ya existe por email (o nombre de usuario, según tu lógica)
+    // Verificar si el usuario ya existe por email (o nombre de usuario)
     const [existingUser] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]); // O WHERE nombre_usuario = ?
 
     if (existingUser.length > 0) {
@@ -24,16 +24,16 @@ exports.register = async (req, res) => {
 
 
   const [result] = await pool.query(
-  `INSERT INTO usuarios (nombre_usuario, apellido, contrasena, rol_id, empleado_id, activo, recordar_sesion, fecha_creacion) 
-   VALUES (?, ?, ?, ?, ?, 1, 0, NOW())`,
-  [nombre_usuario, apellido, hashedPassword, rol_id || 2,  empleadoIdNumber] // activo=1, recordar_sesion=0 // Asigna un rol por defecto (ej: 2 para 'usuario')
+  `INSERT INTO usuarios (nombre_usuario, apellido, email, contrasena, rol_id, empleado_id, activo, recordar_sesion, fecha_creacion) 
+   VALUES (?, ?, ?, ?, ?, ?, 1, 0, NOW())`,
+  [nombre_usuario, apellido, email, hashedPassword, rol_id || 2,  empleadoIdNumber] // activo=1, recordar_sesion=0 // Asigna un rol por defecto (ej: 2 para 'usuario')
     );
 
     const userId = result.insertId;
 
     // Crear un token JWT para el usuario recién registrado (opcional)
     const token = jwt.sign(
-      { id: userId, email: email, rol_id: role_id || 2 }, // Ajusta la información del payload
+      { id: userId, email: email, rol_id: rol_id || 2 }, // Ajusta la información del payload
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
