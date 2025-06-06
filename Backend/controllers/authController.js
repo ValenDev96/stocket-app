@@ -71,31 +71,38 @@ exports.register = async (req, res) => {
 
 // Función para el login
 exports.login = async (req, res) => {
-  // ANOTACIÓN: El formulario de login envía 'email' y 'password'. El backend debe usar esos nombres.
-  // Tu código original esperaba 'contrasena', lo que podría causar un error.
-  const { email, password } = req.body;
+  // ANOTACIÓN: Cambiamos 'password' por 'contrasena' para que coincida con lo que probablemente envía tu formulario de Login.
+  const { email, contrasena } = req.body;
+
+  // Validación simple para asegurar que los datos llegaron
+  if (!email || !contrasena) {
+    return res.status(400).json({ message: 'El correo y la contraseña son obligatorios.' });
+  }
 
   try {
+    // Buscar al usuario en la base de datos
     const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      return res.status(404).json({ message: 'Credenciales inválidas.' }); // Mensaje genérico por seguridad
     }
 
     const usuario = rows[0];
 
-    // ANOTACIÓN: Comparar la contraseña del formulario ('password') con la hasheada de la BD ('usuario.contrasena')
-    const esValida = await bcrypt.compare(password, usuario.contrasena);
+    // ANOTACIÓN: Comparamos la variable 'contrasena' (del formulario) con la hasheada de la BD ('usuario.contrasena')
+    const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValida) {
-      return res.status(401).json({ message: 'Credenciales inválidas.' });
+      return res.status(401).json({ message: 'Credenciales inválidas.' }); // Mensaje genérico por seguridad
     }
 
+    // Crear el token JWT
     const token = jwt.sign(
       { id: usuario.id, nombre_usuario: usuario.nombre_usuario, rol_id: usuario.rol_id },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
+    // Enviar el token y datos del usuario al cliente
     res.json({
       token,
       usuario: {
@@ -105,7 +112,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
-      console.error('Error en el login:', error);
+    console.error('Error en el login:', error);
     res.status(500).json({ message: 'Error al iniciar sesión' });
   }
 };
