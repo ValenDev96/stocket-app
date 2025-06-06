@@ -264,3 +264,67 @@
     margin-bottom: 5px;
   }
 }
+
+/* Ajuste para el botón principal de "Agregar" con icono */
+.gmp-add-button {
+  display: flex; /* Permite alinear el icono y el texto */
+  align-items: center; /* Centra verticalmente */
+  justify-content: center; /* Centra horizontalmente */
+  gap: 8px; /* Espacio entre el icono y el texto */
+  font-size: 1.05em; /* Un poco más grande para que se vea bien */
+}
+
+/* Estilo base para los nuevos botones de acción de la tabla (los que solo tienen icono) */
+.mpl-actions-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px; /* Un padding uniforme */
+  margin: 0 4px; /* Un pequeño margen entre botones */
+  border-radius: 50%; /* ¡Los hace circulares! */
+  width: 36px; /* Ancho fijo */
+  height: 36px; /* Altura fija */
+  display: inline-flex; /* Permite centrar el icono perfectamente */
+  align-items: center;
+  justify-content: center;
+  color: white; /* El color del icono será blanco */
+  font-size: 1em; /* Tamaño del icono */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efecto de "hover" para todos los botones de acción */
+.mpl-actions-btn:hover {
+  transform: translateY(-2px); /* Un sutil efecto de elevación */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Se reutilizan las clases .edit-btn y .delete-btn que ya tenías
+   para darles su color de fondo específico. ¡No es necesario duplicar código! */
+.mpl-actions-btn.edit-btn {
+  background-color: #f39c12; /* Naranja para editar */
+}
+.mpl-actions-btn.edit-btn:hover {
+  background-color: #e67e22;
+}
+
+.mpl-actions-btn.delete-btn {
+  background-color: #e74c3c; /* Rojo para eliminar */
+}
+.mpl-actions-btn.delete-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Opcional: Estilos para botones de Entrada/Salida si los añades */
+.mpl-actions-btn.entrada-btn {
+  background-color: #2ecc71; /* Verde */
+}
+.mpl-actions-btn.entrada-btn:hover {
+  background-color: #27ae60;
+}
+
+.mpl-actions-btn.salida-btn {
+  background-color: #3498db; /* Azul */
+}
+.mpl-actions-btn.salida-btn:hover {
+  background-color: #2980b9;
+}

@@ -1,108 +1,103 @@
-// RUTA: backend/controllers/authController.js
-
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const jwt =require('jsonwebtoken');
 const pool = require('../config/db');
 
-// Función para el registro de nuevos usuarios
+// --- NUEVA FUNCIÓN DE REGISTRO CON TRANSACCIONES ---
 exports.register = async (req, res) => {
-  // Se desestructuran los campos que envía el frontend.
   const { nombre_usuario, apellido, email, password, rol_id } = req.body;
 
-  // Validación para asegurar que los datos esenciales llegaron.
   if (!nombre_usuario || !email || !password || !rol_id) {
-    return res.status(400).json({ message: 'Faltan campos obligatorios para el registro.' });
+    return res.status(400).json({ message: 'Faltan campos obligatorios.' });
   }
 
+  const connection = await pool.getConnection();
+
   try {
-    // Verificar si el usuario ya existe.
-    const [existingUserRows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
+    await connection.beginTransaction();
 
-    if (existingUserRows.length > 0) {
-      return res.status(409).json({ message: 'El correo electrónico ya se encuentra registrado' });
-    }
+    // ---- PASO 1: Insertar en la tabla 'empleados' usando las columnas separadas ----
+    // ANOTACIÓN: Esta consulta asume que ya ejecutaste el comando SQL para añadir las columnas
+    // 'nombre_usuario' y 'apellido' a tu tabla 'empleados'.
+    const empleadoQuery = 'INSERT INTO empleados (nombre_usuario, apellido, correo, rol_id) VALUES (?, ?, ?, ?)';
+    const empleadoValues = [nombre_usuario, apellido, email, rol_id];
+    
+    const [empleadoResult] = await connection.query(empleadoQuery, empleadoValues);
+    
+    // ---- PASO 2: Obtener el ID del empleado recién creado ----
+    const newEmpleadoId = empleadoResult.insertId;
 
-    // Hashear la contraseña.
+    // ---- PASO 3: Hashear la contraseña y crear el registro en 'usuarios' ----
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // ------> INICIO DE LA CORRECCIÓN IMPORTANTE <------
-    // La consulta INSERT ahora tiene 6 columnas a rellenar con placeholders
-    // y una columna ('fecha_creacion') que usa una función de SQL (NOW()).
-    const sqlQuery = `
-      INSERT INTO usuarios 
-        (nombre_usuario, apellido, email, contrasena, rol_id, activo, fecha_creacion) 
-      VALUES (?, ?, ?, ?, ?, ?, NOW())
+    const usuarioQuery = `
+      INSERT INTO usuarios (nombre_usuario, apellido, email, contrasena, rol_id, activo, fecha_creacion, empleado_id) 
+      VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
     `;
-
-    // El array de valores tiene EXACTAMENTE 6 elementos, que corresponden a los 6 placeholders (?)
-    // El '1' corresponde a la columna 'activo'.
-    const values = [nombre_usuario, apellido, email, hashedPassword, rol_id, 1];
+    const usuarioValues = [nombre_usuario, apellido, email, hashedPassword, rol_id, 1, newEmpleadoId];
     
-    const [result] = await pool.query(sqlQuery, values);
-    // ------> FIN DE LA CORRECCIÓN IMPORTANTE <------
+    const [usuarioResult] = await connection.query(usuarioQuery, usuarioValues);
+    const newUserId = usuarioResult.insertId;
 
-    const userId = result.insertId;
+    await connection.commit();
 
-    // Crear token JWT.
+    // ---- PASO 4: Crear el token y enviar la respuesta ----
     const token = jwt.sign(
-      { id: userId, email: email, rol_id: rol_id },
+      { id: newUserId, email: email, rol_id: rol_id, empleado_id: newEmpleadoId },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
     res.status(201).json({
-      message: 'Usuario registrado exitosamente',
-      token: token,
-      user: {
-        id: userId,
-        nombre_usuario: nombre_usuario,
-        email: email,
-        rol_id: rol_id
-      }
+      message: 'Usuario y empleado registrados exitosamente',
+      token: token
     });
 
   } catch (error) {
-    console.error('Error en el controlador de registro:', error);
-    res.status(500).json({ message: 'Error interno del servidor al registrar el usuario.' });
+    await connection.rollback();
+    console.error('Error en la transacción de registro:', error);
+    
+    if (error.code === 'ER_DUP_ENTRY' || (error.sqlMessage && error.sqlMessage.includes('Duplicate entry'))) {
+      return res.status(409).json({ message: 'El correo electrónico ya se encuentra registrado.' });
+    }
+    
+    res.status(500).json({ message: 'Error interno del servidor al registrar.' });
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 };
 
 
-// Función para el login
+// --- FUNCIÓN DE LOGIN (se mantiene igual que la versión funcional anterior) ---
 exports.login = async (req, res) => {
-  // ANOTACIÓN: Cambiamos 'password' por 'contrasena' para que coincida con lo que probablemente envía tu formulario de Login.
   const { email, contrasena } = req.body;
 
-  // Validación simple para asegurar que los datos llegaron
   if (!email || !contrasena) {
     return res.status(400).json({ message: 'El correo y la contraseña son obligatorios.' });
   }
 
   try {
-    // Buscar al usuario en la base de datos
     const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Credenciales inválidas.' }); // Mensaje genérico por seguridad
+      return res.status(404).json({ message: 'Credenciales inválidas.' });
     }
 
     const usuario = rows[0];
 
-    // ANOTACIÓN: Comparamos la variable 'contrasena' (del formulario) con la hasheada de la BD ('usuario.contrasena')
     const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
     if (!esValida) {
-      return res.status(401).json({ message: 'Credenciales inválidas.' }); // Mensaje genérico por seguridad
+      return res.status(401).json({ message: 'Credenciales inválidas.' });
     }
 
-    // Crear el token JWT
     const token = jwt.sign(
       { id: usuario.id, nombre_usuario: usuario.nombre_usuario, rol_id: usuario.rol_id },
       process.env.JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Enviar el token y datos del usuario al cliente
     res.json({
       token,
       usuario: {

@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import '../../styles/InventoryModal.css'; // <-- IMPORTA TU ARCHIVO Modal.css
+import '../../styles/InventoryModal.css';
 
 const RegistrarMovimientoModal = ({ isOpen, onClose, materiaPrima, tipoMovimientoDefault, onSubmit }) => {
+  // ANOTACIÓN: Se mantiene el estado solo para los campos que el usuario debe llenar.
   const [cantidad, setCantidad] = useState('');
   const [descripcion, setDescripcion] = useState('');
-  const [tipoMovimiento, setTipoMovimiento] = useState(tipoMovimientoDefault || 'entrada');
   const [error, setError] = useState('');
+  
+  // ANOTACIÓN: Se añade un estado para deshabilitar los botones durante el envío.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ANOTACIÓN: Se elimina el estado 'tipoMovimiento', ya que ahora es un valor fijo que viene de las props.
   useEffect(() => {
     if (isOpen) {
+      // Limpia el formulario cada vez que el modal se abre.
       setCantidad('');
       setDescripcion('');
-      setTipoMovimiento(tipoMovimientoDefault || 'entrada');
       setError('');
+      setIsSubmitting(false);
     }
-  }, [isOpen, tipoMovimientoDefault, materiaPrima]);
+  }, [isOpen]); // El efecto ahora solo depende de 'isOpen'.
 
   if (!isOpen || !materiaPrima) {
     return null;
@@ -29,11 +34,14 @@ const RegistrarMovimientoModal = ({ isOpen, onClose, materiaPrima, tipoMovimient
       return;
     }
 
+    setIsSubmitting(true); // Deshabilita los botones
+
     const movimientoData = {
       materia_prima_id: materiaPrima.id,
-      tipo_movimiento: tipoMovimiento,
+      // ANOTACIÓN: Se usa 'tipoMovimientoDefault' directamente desde las props.
+      tipo_movimiento: tipoMovimientoDefault,
       cantidad: parseFloat(cantidad),
-      descripcion: descripcion.trim() || `Movimiento de ${tipoMovimiento} para ${materiaPrima.nombre}`,
+      descripcion: descripcion.trim(),
     };
 
     try {
@@ -42,39 +50,38 @@ const RegistrarMovimientoModal = ({ isOpen, onClose, materiaPrima, tipoMovimient
     } catch (err) {
       console.error("Error en handleSubmit del modal:", err);
       setError(err.message || 'Error al registrar el movimiento.');
+      setIsSubmitting(false); // Vuelve a habilitar los botones si hay un error
     }
   };
 
   return (
-    <div className="modal-backdrop"> {/* Usa la clase del CSS */}
-      <div className="modal-content"> {/* Usa la clase del CSS */}
+    // ANOTACIÓN: El backdrop ahora tendrá el nuevo estilo CSS (translúcido y con desenfoque).
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title"> {/* Usa la clase del CSS */}
-            Registrar Movimiento: {materiaPrima.nombre} ({tipoMovimiento === 'entrada' ? 'Entrada' : 'Salida'})
+          <h3 className="modal-title">
+            {/* El título ahora es más dinámico. */}
+            Registrar Movimiento: {materiaPrima.nombre}
           </h3>
           <button onClick={onClose} className="modal-close-button" aria-label="Cerrar modal">&times;</button>
         </div>
         
-        {error && <p className="modal-error-message">{error}</p>} {/* Usa la clase del CSS */}
+        <form onSubmit={handleSubmit}>
+          {error && <p className="modal-error-message">{error}</p>}
 
-        {/* Puedes añadir la clase modal-body al form si definiste estilos para ella */}
-        <form onSubmit={handleSubmit} className="modal-body"> 
-          <div className="modal-form-group"> {/* Usa la clase del CSS */}
-            <label htmlFor="tipoMovimiento">Tipo de Movimiento:</label>
-            <select
-              id="tipoMovimiento"
-              name="tipoMovimiento"
-              value={tipoMovimiento}
-              onChange={(e) => setTipoMovimiento(e.target.value)}
-              disabled={!!tipoMovimientoDefault}
-            >
-              <option value="entrada">Entrada</option>
-              <option value="salida">Salida</option>
-            </select>
+          {/* ANOTACIÓN: INICIO DEL CAMBIO PRINCIPAL */}
+          {/* Se reemplaza el <select> por un <div> estático que no es editable. */}
+          <div className="modal-form-group">
+            <label>Tipo de Movimiento:</label>
+            <div className="modal-static-field">
+              {tipoMovimientoDefault}
+            </div>
           </div>
+          {/* ANOTACIÓN: FIN DEL CAMBIO PRINCIPAL */}
 
-          <div className="modal-form-group"> {/* Usa la clase del CSS */}
-            <label htmlFor="cantidadMovimiento">Cantidad* ({materiaPrima.unidad}):</label>
+          <div className="modal-form-group">
+            {/* ANOTACIÓN: Usamos 'materiaPrima.unidad_medida' de tu componente padre, si no existe usa 'unidad'. */}
+            <label htmlFor="cantidadMovimiento">Cantidad* ({materiaPrima.unidad_medida || materiaPrima.unidad}):</label>
             <input
               type="number"
               id="cantidadMovimiento"
@@ -85,10 +92,11 @@ const RegistrarMovimientoModal = ({ isOpen, onClose, materiaPrima, tipoMovimient
               min="0.01"
               required
               autoFocus
+              disabled={isSubmitting} // Deshabilitado durante el envío
             />
           </div>
 
-          <div className="modal-form-group"> {/* Usa la clase del CSS */}
+          <div className="modal-form-group">
             <label htmlFor="descripcionMovimiento">Descripción (Opcional):</label>
             <input
               type="text"
@@ -97,12 +105,15 @@ const RegistrarMovimientoModal = ({ isOpen, onClose, materiaPrima, tipoMovimient
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Ej: Compra a Proveedor X, Uso en Lote Y"
+              disabled={isSubmitting} // Deshabilitado durante el envío
             />
           </div>
 
-          <div className="modal-form-buttons"> {/* Usa la clase del CSS */}
-            <button type="submit">Registrar Movimiento</button>
-            <button type="button" onClick={onClose}>Cancelar</button>
+          <div className="modal-form-buttons">
+            <button type="button" onClick={onClose} disabled={isSubmitting}>Cancelar</button>
+            <button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Registrando...' : 'Registrar Movimiento'}
+            </button>
           </div>
         </form>
       </div>
