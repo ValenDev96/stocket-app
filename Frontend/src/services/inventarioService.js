@@ -1,16 +1,13 @@
-// Frontend/src/services/inventarioService.js
+const API_URL_BASE = 'http://localhost:3000/api'; // Puerto del backend
 
-const API_URL_BASE = 'http://localhost:3000/api'; // O el puerto de tu backend
-
-// Función para obtener el token de localStorage
 const getToken = () => localStorage.getItem('token');
 
-// Obtener todas las materias primas
+// --- Funciones existentes para Materias Primas ---
 export const getAllMateriasPrimas = async () => {
   const response = await fetch(`${API_URL_BASE}/materiasprimas`, {
-    headers: { // Añadir cabeceras
-      'Authorization': `Bearer ${getToken()}`, // Enviar el token
-      'Content-Type': 'application/json' // Aunque para GET no siempre es necesario, es buena práctica
+    headers: {
+      'Authorization': `Bearer ${getToken()}`,
+      'Content-Type': 'application/json'
     }
   });
   if (!response.ok) {
@@ -20,13 +17,12 @@ export const getAllMateriasPrimas = async () => {
   return response.json();
 };
 
-// Crear materia prima
 export const createMateriaPrima = async (materiaPrimaData) => {
   const response = await fetch(`${API_URL_BASE}/materiasprimas`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}` // Enviar el token
+      'Authorization': `Bearer ${getToken()}`
     },
     body: JSON.stringify(materiaPrimaData),
   });
@@ -37,13 +33,13 @@ export const createMateriaPrima = async (materiaPrimaData) => {
   return response.json();
 };
 
-// Actualizar materia prima
 export const updateMateriaPrima = async (id, materiaPrimaData) => {
-  const response = await fetch(`<span class="math-inline">{API_URL_BASE}/materiasprimas/</span>{id}`, {
+  const url = `${API_URL_BASE}/materiasprimas/${id}`;
+  const response = await fetch(url, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${getToken()}` // Enviar el token
+      'Authorization': `Bearer ${getToken()}`
     },
     body: JSON.stringify(materiaPrimaData),
   });
@@ -54,12 +50,12 @@ export const updateMateriaPrima = async (id, materiaPrimaData) => {
   return response.json();
 };
 
-// Eliminar materia prima
 export const deleteMateriaPrima = async (id) => {
-  const response = await fetch(`<span class="math-inline">{API_URL_BASE}/materiasprimas/</span>{id}`, {
+  const url = `${API_URL_BASE}/materiasprimas/${id}`;
+  const response = await fetch(url, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${getToken()}` // Enviar el token
+      'Authorization': `Bearer ${getToken()}`
     }
   });
   if (!response.ok) {
@@ -69,9 +65,9 @@ export const deleteMateriaPrima = async (id) => {
   return response.json();
 };
 
-// (getMateriaPrimaById también necesitaría el token en headers si la usas)
 export const getMateriaPrimaById = async (id) => {
-  const response = await fetch(`<span class="math-inline">{API_URL_BASE}/materiasprimas/</span>{id}`, {
+  const url = `${API_URL_BASE}/materiasprimas/${id}`;
+  const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${getToken()}`
     }
@@ -81,4 +77,63 @@ export const getMateriaPrimaById = async (id) => {
     throw new Error(errorData.message || 'Error desconocido al obtener la materia prima por ID');
   }
   return response.json();
+};
+
+// --- Funciones para Movimientos de Inventario ---
+export const registrarMovimientoInventario = async (movimientoData) => {
+  const url = `${API_URL_BASE}/movimientos`;
+  // console.log('Registrando movimiento URL:', url, 'Datos:', movimientoData);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`
+    },
+    body: JSON.stringify(movimientoData)
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: `Error del servidor: ${response.statusText}` }));
+    throw new Error(errorData.message || 'Error desconocido al registrar el movimiento.');
+  }
+  return response.json();
+};
+
+export const getMovimientosPorMateriaPrima = async (materiaPrimaId) => {
+  const url = `${API_URL_BASE}/movimientos/${materiaPrimaId}`;
+  // console.log('Obteniendo movimientos URL:', url);
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': `Bearer ${getToken()}`,
+      'Content-Type': 'application/json'
+    }
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: `Error del servidor: ${response.statusText}` }));
+    throw new Error(errorData.message || 'Error desconocido al obtener el historial de movimientos.');
+  }
+  return response.json();
+};
+
+// --- NUEVA FUNCIÓN PARA OBTENER ALERTAS ---
+/**
+ * Obtiene todas las alertas activas del inventario.
+ */
+export const getAlertasActivas = async () => {
+  const url = `${API_URL_BASE}/alertas/activas`;
+  console.log('Obteniendo alertas activas URL:', url);
+
+  const response = await fetch(url, {
+    method: 'GET', // Aunque GET es el default, lo especificamos por claridad
+    headers: {
+      'Authorization': `Bearer ${getToken()}`,
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: `Error del servidor: ${response.statusText}` }));
+    console.error('Error al obtener alertas activas:', errorData);
+    throw new Error(errorData.message || 'Error desconocido al obtener las alertas.');
+  }
+  return response.json(); // Devuelve el array de alertas
 };

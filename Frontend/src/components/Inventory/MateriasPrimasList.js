@@ -1,7 +1,11 @@
-// Frontend/src/components/Inventory/MateriasPrimasList.js
 import React from 'react';
+// Asegúrate de que los estilos de Inventory.css son importados donde se usa este componente
+// o importa aquí si tienes estilos específicos para esta lista que no estén en Inventory.css
 
-const MateriasPrimasList = ({ materiasPrimas, onEdit, onDelete }) => {
+const MateriasPrimasList = ({ materiasPrimas, onEdit, onDelete, onRegistrarEntrada, onRegistrarSalida, puedeModificarInventario }) => {
+  // puedeModificarInventario es un booleano que indica si el usuario tiene permiso para realizar acciones de modificación
+  // como registrar entradas/salidas, editar o eliminar.
+
   if (!materiasPrimas || materiasPrimas.length === 0) {
     return <p className="no-data-message-mpl">No hay materias primas registradas para mostrar.</p>;
   }
@@ -19,7 +23,10 @@ const MateriasPrimasList = ({ materiasPrimas, onEdit, onDelete }) => {
             <th>Umbral Alerta</th>
             <th>Expiración</th>
             <th>Proveedor ID</th>
-            <th>Acciones</th>
+            {/* Solo mostrar la columna de Acciones si hay alguna acción disponible */}
+            {(onEdit || onDelete || (puedeModificarInventario && (onRegistrarEntrada || onRegistrarSalida))) && (
+              <th>Acciones</th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -32,10 +39,30 @@ const MateriasPrimasList = ({ materiasPrimas, onEdit, onDelete }) => {
               <td data-label="Umbral Alerta">{mp.umbral_alerta}</td>
               <td data-label="Expiración">{mp.fecha_expiracion ? new Date(mp.fecha_expiracion).toLocaleDateString() : 'N/A'}</td>
               <td data-label="Proveedor ID">{mp.proveedor_id || 'N/A'}</td>
-              <td data-label="Acciones" className="mpl-actions">
-                <button onClick={() => onEdit(mp)} className="edit-btn">Editar</button>
-                <button onClick={() => onDelete(mp.id)} className="delete-btn">Eliminar</button>
-              </td>
+              
+              {/* Solo renderizar la celda de acciones si hay alguna acción permitida/disponible */}
+              {(onEdit || onDelete || (puedeModificarInventario && (onRegistrarEntrada || onRegistrarSalida))) && (
+                <td data-label="Acciones" className="mpl-actions">
+                  {/* Botones de Entrada/Salida solo si puedeModificarInventario es true */}
+                  {puedeModificarInventario && onRegistrarEntrada && (
+                    <button onClick={() => onRegistrarEntrada(mp)} className="action-btn entrada-btn" style={{backgroundColor: '#5cb85c', color: 'white', marginRight: '5px'}}>
+                      Entrada
+                    </button>
+                  )}
+                  {puedeModificarInventario && onRegistrarSalida && (
+                    <button onClick={() => onRegistrarSalida(mp)} className="action-btn salida-btn" style={{backgroundColor: '#f0ad4e', color: 'white', marginRight: '5px'}}>
+                      Salida
+                    </button>
+                  )}
+                  {/* Botones de Editar/Eliminar existentes (podrían también depender de puedeModificarInventario) */}
+                  {onEdit && puedeModificarInventario && ( // Asumiendo que editar también requiere permiso de modificación
+                    <button onClick={() => onEdit(mp)} className="edit-btn">Editar</button>
+                  )}
+                  {onDelete && puedeModificarInventario && ( // Asumiendo que eliminar también requiere permiso de modificación
+                    <button onClick={() => onDelete(mp.id)} className="delete-btn">Eliminar</button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
         </tbody>

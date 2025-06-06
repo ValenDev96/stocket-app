@@ -60,6 +60,8 @@ exports.obtenerMateriaPrimaPorId = async (req, res) => {
 
 // Actualizar una materia prima
 exports.actualizarMateriaPrima = async (req, res) => {
+  console.log(`[CONTROLLER] Solicitud PUT a /api/materiasprimas/${req.params.id} recibida.`);
+  console.log('[CONTROLLER] Body de la solicitud PUT:', req.body);
   const { id } = req.params;
   const { nombre, proveedor_id, cantidad, unidad, fecha_expiracion, umbral_alerta } = req.body;
 
@@ -93,6 +95,7 @@ exports.actualizarMateriaPrima = async (req, res) => {
 
 // Eliminar una materia prima
 exports.eliminarMateriaPrima = async (req, res) => {
+  console.log(`[CONTROLLER] Solicitud DELETE a /api/materiasprimas/${req.params.id} recibida.`);
   const { id } = req.params;
   try {
     const [result] = await pool.query('DELETE FROM materias_primas WHERE id = ?', [id]);

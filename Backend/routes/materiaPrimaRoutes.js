@@ -1,47 +1,46 @@
+// Backend/routes/materiasPrimasRoutes.js
 const express = require('express');
 const router = express.Router();
 const materiasPrimasController = require('../controllers/materiaPrimaController');
-const { protegerRuta, autorizarRol } = require('../middleware/authMiddleware'); // Asegúrate que la ruta a tu middleware sea correcta
+const { protegerRuta, autorizarRol } = require('../middleware/authMiddleware');
 
-// Rutas CRUD para Materias Primas
+console.log('[materiasPrimasRoutes.js] Configurando rutas para materias primas...'); // Log al cargar el archivo
 
-// Crear una nueva materia prima: Solo Administrador y Líder de Bodega
+const rolesParaVerInventario = ['administrador', 'bodega', 'produccion'];
+const rolesParaModificarInventario = ['administrador', 'bodega'];
+
 router.post(
     '/',
     protegerRuta,
-    autorizarRol(['administrador', 'bodega']), // Roles permitidos: 1 (admin), 3 (bodega)
+    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden crear
     materiasPrimasController.crearMateriaPrima
 );
 
-// Obtener todas las materias primas: Administrador, Líder de Bodega, Producción
 router.get(
     '/',
     protegerRuta,
-    autorizarRol(['administrador', 'bodega', 'produccion']), // Roles permitidos
+    autorizarRol(rolesParaVerInventario),
     materiasPrimasController.obtenerTodasMateriasPrimas
 );
 
-// Obtener una materia prima por ID: Administrador, Líder de Bodega, Producción
 router.get(
     '/:id',
     protegerRuta,
-    autorizarRol(['administrador', 'bodega', 'produccion']), // Roles permitidos
+    autorizarRol(rolesParaVerInventario),
     materiasPrimasController.obtenerMateriaPrimaPorId
 );
 
-// Actualizar una materia prima: Solo Administrador y Líder de Bodega
 router.put(
     '/:id',
     protegerRuta,
-    autorizarRol(['administrador', 'bodega']), // Roles permitidos
+    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden actualizar
     materiasPrimasController.actualizarMateriaPrima
 );
 
-// Eliminar una materia prima: Solo Administrador y Líder de Bodega
 router.delete(
     '/:id',
     protegerRuta,
-    autorizarRol(['administrador', 'bodega']), // Roles permitidos
+    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden eliminar
     materiasPrimasController.eliminarMateriaPrima
 );
 

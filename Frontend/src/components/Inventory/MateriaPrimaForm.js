@@ -1,12 +1,11 @@
-// Frontend/src/components/Inventory/MateriaPrimaForm.js
+
 import React, { useState, useEffect } from 'react';
 
-// Definir initialFormState FUERA del componente para que tenga una referencia estable
 const STATIC_INITIAL_FORM_STATE = {
   nombre: '',
-  proveedor_id: '',
+  proveedor_id: '', // Siempre inicializar como string vacío
   cantidad: '',
-  unidad: 'kg', // Valor por defecto para el select
+  unidad: 'kg',
   fecha_expiracion: '',
   umbral_alerta: '',
 };
@@ -20,18 +19,16 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
     if (isEditMode && initialData) {
       setFormData({
         nombre: initialData.nombre || '',
-        proveedor_id: initialData.proveedor_id || '',
+        // Convertir proveedor_id a string para el estado del formulario
+        proveedor_id: initialData.proveedor_id !== null && initialData.proveedor_id !== undefined ? String(initialData.proveedor_id) : '',
         cantidad: initialData.cantidad || '',
         unidad: initialData.unidad || 'kg',
-        // Asegurarse de que la fecha esté en formato YYYY-MM-DD para el input type="date"
         fecha_expiracion: initialData.fecha_expiracion ? initialData.fecha_expiracion.split('T')[0] : '',
         umbral_alerta: initialData.umbral_alerta || '',
       });
     } else {
-      // Cuando no está en modo edición o initialData es null (para creación)
       setFormData(STATIC_INITIAL_FORM_STATE);
     }
-    // Limpiar mensajes al cambiar de modo o de datos iniciales
     setError('');
     setSuccessMessage('');
   }, [initialData, isEditMode]);
@@ -40,7 +37,7 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
     const { name, value } = e.target;
     setFormData(prevData => ({
       ...prevData,
-      [name]: value,
+      [name]: value, // El valor de un input es siempre un string
     }));
   };
 
@@ -49,7 +46,6 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
     setError('');
     setSuccessMessage('');
 
-    // Validación básica de frontend
     if (!formData.nombre.trim() || formData.cantidad === '' || !formData.unidad || formData.umbral_alerta === '') {
       setError('Los campos marcados con * (nombre, cantidad, unidad y umbral de alerta) son obligatorios.');
       return;
@@ -60,35 +56,33 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
     }
 
     try {
-      // Preparar datos para enviar (convertir a número si es necesario)
+      const trimmedProveedorId = formData.proveedor_id.trim(); // .trim() ahora es seguro porque formData.proveedor_id es un string
+
       const dataToSend = {
-        ...formData,
+        ...formData, // Incluye todos los campos del formulario (nombre, unidad, etc.)
         cantidad: parseFloat(formData.cantidad),
         umbral_alerta: parseFloat(formData.umbral_alerta),
-        // Enviar null si los campos opcionales están vacíos, para que la BD no los tome como string vacío
-        proveedor_id: formData.proveedor_id ? formData.proveedor_id.trim() : null,
+        // Si después de trim, proveedor_id es un string vacío, enviar null. Sino, enviar el valor con trim.
+        // Si proveedor_id debe ser numérico en el backend, puedes convertirlo aquí:
+        // proveedor_id: trimmedProveedorId ? Number(trimmedProveedorId) : null,
+        // O dejarlo como string si tu backend maneja la conversión o espera un string:
+        proveedor_id: trimmedProveedorId ? trimmedProveedorId : null,
         fecha_expiracion: formData.fecha_expiracion ? formData.fecha_expiracion : null,
       };
 
-      await onSubmit(dataToSend); // Llama a la función create o update pasada por props
+      await onSubmit(dataToSend);
       setSuccessMessage(isEditMode ? 'Materia prima actualizada con éxito!' : 'Materia prima creada con éxito!');
       
       if (!isEditMode) {
-        setFormData(STATIC_INITIAL_FORM_STATE); // Limpiar formulario solo en modo creación si fue exitoso
+        setFormData(STATIC_INITIAL_FORM_STATE);
       }
-      // Opcional: cerrar el formulario o limpiar mensaje después de un tiempo
-      // setTimeout(() => {
-      //   setSuccessMessage('');
-      //   if (onCancel && !isEditMode) onCancel(); // Cierra si es creación y hay onCancel
-      // }, 2000);
-
     } catch (err) {
       console.error("Error en handleSubmit de MateriaPrimaForm:", err);
       setError(err.message || (isEditMode ? 'Error al actualizar la materia prima.' : 'Error al crear la materia prima.'));
     }
   };
 
-  const unidadesDisponibles = ['kg', 'g', 'L', 'ml', 'unidades']; // Ajusta según tu ENUM en BD
+  const unidadesDisponibles = ['kg', 'g', 'L', 'ml', 'unidades'];
 
   return (
     <form onSubmit={handleSubmit} className="materia-prima-form">
@@ -145,10 +139,10 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
       <div className="form-group-mpf">
         <label htmlFor="proveedor_id">ID Proveedor (opcional):</label>
         <input
-          type="text" // O number si siempre es numérico y quieres validación del navegador
+          type="text" // Se mantiene como text para flexibilidad, la conversión a número se puede hacer antes de enviar si es necesario
           id="proveedor_id"
           name="proveedor_id"
-          value={formData.proveedor_id || ''} // Controlar para que no sea null en el input
+          value={formData.proveedor_id} // formData.proveedor_id ahora es siempre un string
           onChange={handleChange}
         />
       </div>
@@ -158,7 +152,7 @@ const MateriaPrimaForm = ({ onSubmit, initialData = null, onCancel, isEditMode =
           type="date"
           id="fecha_expiracion"
           name="fecha_expiracion"
-          value={formData.fecha_expiracion || ''} // Controlar para que no sea null en el input
+          value={formData.fecha_expiracion} // formData.fecha_expiracion es un string
           onChange={handleChange}
         />
       </div>
