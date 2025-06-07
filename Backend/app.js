@@ -14,7 +14,7 @@ const rolesRoutes = require('./routes/rolesRoutes');
 const authRoutes = require('./routes/authRoutes');
 const materiasPrimasRoutes = require('./routes/materiaPrimaRoutes');
 const movimientosInventarioRoutes = require('./routes/movimientosInventarioRoutes');
-const pedidosRoutes = require('./routes/pedidos.Routes'); // <-- IMPORTAR RUTAS DE PEDIDOS
+const pedidosRoutes = require('./routes/pedidosRoutes'); // <-- IMPORTAR RUTAS DE PEDIDOS
 // Nuevas rutas para alertas
 const alertasRoutes = require('./routes/alertasRoutes'); // <-- IMPORTAR
 
