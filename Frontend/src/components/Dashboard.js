@@ -22,11 +22,11 @@ function Dashboard() {
   const [cargandoAlertas, setCargandoAlertas] = useState(false);
   const [errorAlertas, setErrorAlertas] = useState('');
 
-  const ROLES_ACCESO_PROVEEDORES = [1, 2, 3];
-  const ROLES_ACCESO_PEDIDOS = [1, 2, 4];   
-  const ROLES_ACCESO_INVENTARIO = [1, 3, 4];
-  const ROLES_ACCESO_PRODUCCION = [1, 3, 4];
-  const ROLES_PARA_VER_ALERTAS = [1, 3, 4];
+  const ROLES_PARA_VER_ALERTAS = useMemo(() => [1, 3, 4], []);
+  const ROLES_ACCESO_PROVEEDORES = useMemo(() => [1, 2, 3], []);
+  const ROLES_ACCESO_PEDIDOS = useMemo(() => [1, 2, 4], []);
+  const ROLES_ACCESO_INVENTARIO = useMemo(() => [1, 3, 4], []);
+  const ROLES_ACCESO_PRODUCCION = useMemo(() => [1, 3, 4], []);
 
   const cargarAlertas = useCallback(async () => {
     // Esta condición ahora usa el 'usuario' memoizado.
@@ -46,7 +46,7 @@ function Dashboard() {
       setAlertas([]);
     }
     // El useCallback ahora depende de 'token' y 'usuario' (que es estable gracias a useMemo).
-  }, [token, usuario]);
+  }, [token, usuario, ROLES_PARA_VER_ALERTAS]);
 
   useEffect(() => {
     if (!token) {
@@ -68,7 +68,7 @@ function Dashboard() {
     switch (section) {
       case 'inventario': navigate('/inventory'); break;
       case 'proveedores': console.log('Navegar a Proveedores'); break;
-      case 'pedidos': console.log('Navegar a Pedidos'); break;
+      case 'pedidos': navigate ('/orders'); break;
       case 'produccion': console.log('Navegar a Producción'); break;
       default: console.log(`Sección no reconocida: ${section}`);
     }

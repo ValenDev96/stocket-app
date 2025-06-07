@@ -5,6 +5,7 @@ import Inventory from './components/Inventory/GestionMateriasPrimas';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
+import Orders from './components/Orders';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/App.css';
 import Home from './components/Home';
@@ -20,6 +21,8 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/orders" element={<Orders />} />
+        {/* Agrega más rutas según sea necesario */}
       </Routes>
     </Router>
   );
