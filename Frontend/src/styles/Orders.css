@@ -18,7 +18,7 @@
 }
 
 /* Botón "Registros de usuario" */
-.registros-usuario-btn {
+.Informacion-Cliente-btn {
   background: #4a5568;
   color: #fff;
   border: none;
@@ -29,10 +29,10 @@
   transition: background 0.2s;
 }
 
-.registros-usuario-btn:hover {
+.Informacion-Cliente-btn:hover {
   background: #015eb6;
 }
-.registros-usuario-btn-wrapper {
+.Informacion-Cliente-btn-wrapper {
   display: flex;
   justify-content: flex-end;
   margin-top: 40px;

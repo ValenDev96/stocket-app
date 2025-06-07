@@ -87,7 +87,7 @@ const Orders = () => {
 
   // Función para el botón (puedes cambiarla cuando el módulo exista)
   const handleRegistrosUsuario = () => {
-    alert('Módulo "Registros de usuario" próximamente disponible.');
+    alert('Módulo "Informacion de clientes" próximamente disponible.');
   };
 
   const handleRegresar = () => {
@@ -164,7 +164,7 @@ const Orders = () => {
           ))}
         </tbody>
       </table>
-      <div className="registros-usuario-btn-wrapper">
+      <div className="Informacion-Cliente-btn-wrapper">
         <button
           type="button"
           className="regresar-btn"
@@ -174,10 +174,10 @@ const Orders = () => {
         </button>
         <button
           type="button"
-          className="registros-usuario-btn"
-          onClick={handleRegistrosUsuario}
+          className="Informacion-Cliente-btn"
+          onClick={handleInformacionCliente}
         >
-          Registros de usuario
+          Información de Cliente
         </button>
       </div>
     </div>
