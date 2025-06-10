@@ -15,6 +15,7 @@ const authRoutes = require('./routes/authRoutes');
 const materiasPrimasRoutes = require('./routes/materiaPrimaRoutes');
 const movimientosInventarioRoutes = require('./routes/movimientosInventarioRoutes');
 const pedidosRoutes = require('./routes/pedidosRoutes'); // <-- IMPORTAR RUTAS DE PEDIDOS
+const proveedoresRoutes = require('./routes/proveedoresRoutes'); // <-- IMPORTAR RUTAS DE PROVEEDORES
 // Nuevas rutas para alertas
 const alertasRoutes = require('./routes/alertasRoutes'); // <-- IMPORTAR
 
@@ -24,6 +25,7 @@ app.use('/api/materiasprimas', materiasPrimasRoutes);
 app.use('/api/movimientos', movimientosInventarioRoutes);
 app.use('/api/alertas', alertasRoutes);
 app.use('/api/orders',pedidosRoutes); // <-- USAR NUEVAS RUTAS
+app.use('/api/providers',proveedoresRoutes); // <-- USAR NUEVAS RUTAS
 
 console.log("Rutas de autenticación (/api/auth) configuradas.");
 console.log("Rutas de materias primas (/api/materiasprimas) configuradas.");

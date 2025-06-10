@@ -86,7 +86,7 @@ const Orders = () => {
   }
 
   // Función para el botón (puedes cambiarla cuando el módulo exista)
-  const handleRegistrosUsuario = () => {
+  const handleInformacionCliente = () => {
     alert('Módulo "Informacion de clientes" próximamente disponible.');
   };
 

@@ -67,7 +67,7 @@ function Dashboard() {
   const handleNavButtonClick = (section) => {
     switch (section) {
       case 'inventario': navigate('/inventory'); break;
-      case 'proveedores': console.log('Navegar a Proveedores'); break;
+      case 'proveedores': navigate('/providers'); break;
       case 'pedidos': navigate ('/orders'); break;
       case 'produccion': console.log('Navegar a Producción'); break;
       default: console.log(`Sección no reconocida: ${section}`);
