@@ -112,3 +112,12 @@ exports.eliminarMateriaPrima = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor al eliminar materia prima' });
   }
 };
+exports.obtenerMateriasPrimas = async (req, res) => {
+  try {
+    const [materias] = await pool.query('SELECT id, nombre FROM materias_primas ORDER BY nombre ASC');
+    res.status(200).json(materias);
+  } catch (error) {
+    console.error('Error al obtener materias primas:', error);
+    res.status(500).json({ message: 'Error interno del servidor al obtener materias primas' });
+  }
+};

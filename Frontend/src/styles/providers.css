@@ -1,0 +1,102 @@
+/* Nueva clase para centrar el contenedor */
+.providers-center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+}
+
+/* Card ajustada */
+.providers-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px 40px;
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Botones verticales y centrados */
+.providers-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.providers-button {
+  width: 180px;
+  padding: 10px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+}
+
+/* Colores específicos */
+.providers-button.blue {
+  background-color: #1d6ce2;
+  color: white;
+}
+.providers-button.blue:hover {
+  background-color: #1558b0;
+}
+
+.providers-button.green {
+  background-color: #229954;
+  color: white;
+}
+.providers-button.green:hover {
+  background-color: #1a7e44;
+}
+
+.providers-button.cyan {
+  background-color: #00bcd4;
+  color: white;
+}
+.providers-button.cyan:hover {
+  background-color: #0097a7;
+}
+/* Centrado de contenedor */
+.providers-center-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 16px;
+}
+
+/* Card más ancha */
+.providers-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  padding: 32px 40px;
+  width: 100%;
+  max-width: 700px; /* Aumentado para mayor ancho */
+}
+
+/* Título centrado */
+.providers-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 24px;
+  color: #2c3e50;
+  text-align: center;
+}
+.reg {
+  dwidth: 180px;
+  padding: 10px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.3s ease
+}
+
+.btn-regresar:hover {
+  background-color: #363838;
+}

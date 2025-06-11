@@ -1,121 +1,193 @@
-import { useState } from "react";
-// Asegúrate de que esta ruta y el nombre de la función 'registrarCompra' son correctos
-import { registrarCompra } from "../../services/proveedoresService";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  registrarCompra,
+  obtenerProveedores,
+} from "../../services/proveedoresService";
 
-export default function CompraForm() {
-  // 1. Actualizar el estado inicial 'compra' con los nuevos nombres de campos
-  // Estos nombres de propiedad en el estado de React se alinean con las columnas de lotes_materias_primas
+export default function CompraForm({ onRegresar }) {
   const [compra, setCompra] = useState({
-    id_proveedor: "",         // Corresponde a 'proveedor_id' en la DB
-    materia_prima_id: "",     // Corresponde a 'materia_prima_id' en la DB (antes 'producto')
-    cantidad_ingresada: "",   // Corresponde a 'cantidad_ingresada' en la DB (antes 'cantidad')
-    costo_compra: "",         // Corresponde a 'costo_compra' en la DB (antes 'precio_unitario')
-    fecha_ingreso: "",        // Corresponde a 'fecha_ingreso' en la DB (antes 'fecha_compra')
-    fecha_expiracion: "",     // Nuevo campo opcional para 'fecha_expiracion' en la DB
+    proveedor_id: "",
+    materia_prima_nombre: "",
+    cantidad_ingresada: "",
+    costo_compra: "",
+    fecha_ingreso: "",
+    fecha_expiracion: "",
   });
 
-  // 2. 'handleChange' se mantiene igual, ya que es genérico y funciona con los nuevos 'name' de los inputs
-  const handleChange = (e) => setCompra({ ...compra, [e.target.name]: e.target.value });
+  const [proveedores, setProveedores] = useState([]);
+  const navigate = useNavigate();
 
-  // 3. 'handleSubmit' ajustado para la nueva lógica y validación
+  const irAHistorial = () => {
+    navigate('/providers/historial');
+      
+  };
+  const irADashboard = () => {
+    navigate('/providers');
+  };
+
+  const handleChange = (e) =>
+    setCompra({ ...compra, [e.target.name]: e.target.value });
+
+  useEffect(() => {
+    const fetchProveedores = async () => {
+      try {
+        const data = await obtenerProveedores();
+        console.log("Proveedores obtenidos:", data);
+        setProveedores(data);
+      } catch (error) {
+        console.error("Error al cargar proveedores:", error);
+        alert("No se pudieron cargar los proveedores.");
+      }
+    };
+
+    fetchProveedores();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Validación en el frontend (primera capa)
-      // Se validan los campos obligatorios para 'lotes_materias_primas'
-      if (
-        !compra.id_proveedor ||
-        !compra.materia_prima_id ||
-        !compra.cantidad_ingresada ||
-        !compra.costo_compra ||
-        !compra.fecha_ingreso
-      ) {
-        alert("Por favor, rellena todos los campos obligatorios para el lote de materia prima.");
+      const camposObligatorios = [
+        "proveedor_id",
+        "materia_prima_nombre",
+        "cantidad_ingresada",
+        "costo_compra",
+        "fecha_ingreso",
+      ];
+
+      const faltan = camposObligatorios.some((campo) => !compra[campo]);
+
+      if (faltan) {
+        alert("Por favor, rellena todos los campos obligatorios.");
         return;
       }
 
-      // Llama a la función del servicio para enviar los datos al backend
-      // El objeto 'compra' ahora tiene los nombres de propiedad correctos que el backend espera
-      await registrarCompra(compra);
+      // ✅ Recuperar usuario desde localStorage
+      const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+      if (!usuario || !usuario.id) {
+        alert("Usuario no autenticado. Inicia sesión nuevamente.");
+        return;
+      }
+
+      // ✅ Incluir usuario_id en la compra
+      const compraConStock = {
+        ...compra,
+        stock_lote: compra.cantidad_ingresada,
+        usuario_id: usuario.id,
+      };
+
+      await registrarCompra(compraConStock);
       alert("Lote de materia prima registrado exitosamente");
 
-      // Resetea el formulario con los nuevos nombres de propiedades a cadenas vacías
       setCompra({
-        id_proveedor: "",
-        materia_prima_id: "",
+        proveedor_id: "",
+        materia_prima_nombre: "",
         cantidad_ingresada: "",
         costo_compra: "",
         fecha_ingreso: "",
         fecha_expiracion: "",
       });
-
     } catch (error) {
-      // Manejo de errores
-      console.error('Error al registrar el lote de materia prima:', error);
-      alert("Error al registrar el lote de materia prima: " + (error.message || "Error desconocido"));
+      console.error("Error al registrar el lote:", error);
+      alert("Error al registrar el lote: " + (error.message || "Error desconocido"));
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Registrar Lote de Materia Prima (Compra)</h2>
-      {/* 4. Actualizar los inputs del formulario con los nuevos 'name' y 'value' */}
-      {/* type="number" para asegurar que se ingresen valores numéricos en campos ID y cantidades/costos */}
-      <input
-        name="id_proveedor"
-        value={compra.id_proveedor}
-        onChange={handleChange}
-        placeholder="ID Proveedor"
-        type="number"
-        required
-      />
-      {/* Campo para el ID de la Materia Prima */}
-      <input
-        name="materia_prima_id"
-        value={compra.materia_prima_id}
-        onChange={handleChange}
-        placeholder="ID Materia Prima"
-        type="number"
-        required
-      />
-      {/* Campo para la Cantidad Ingresada, con 'step' para permitir decimales */}
-      <input
-        name="cantidad_ingresada"
-        value={compra.cantidad_ingresada}
-        onChange={handleChange}
-        placeholder="Cantidad Ingresada (ej. 10.5)"
-        type="number"
-        step="0.01"
-        required
-      />
-      {/* Campo para el Costo Total de la Compra, con 'step' para permitir decimales */}
-      <input
-        name="costo_compra"
-        value={compra.costo_compra}
-        onChange={handleChange}
-        placeholder="Costo Total de Compra (ej. 150.75)"
-        type="number"
-        step="0.01"
-        required
-      />
-      {/* Campo para la Fecha de Ingreso del Lote */}
-      <input
-        name="fecha_ingreso"
-        value={compra.fecha_ingreso}
-        onChange={handleChange}
-        placeholder="Fecha de Ingreso"
-        type="date"
-        required
-      />
-      {/* Campo opcional para la Fecha de Expiración del Lote */}
-      <input
-        name="fecha_expiracion"
-        value={compra.fecha_expiracion}
-        onChange={handleChange}
-        placeholder="Fecha de Expiración (opcional)"
-        type="date"
-      />
-      <button type="submit">Registrar Lote</button>
-    </form>
+    <div className="card shadow p-4 mt-4">
+      <h3 className="mb-4">Registrar Lote de Materia Prima (Compra)</h3>
+      <form onSubmit={handleSubmit}>
+        <label>Proveedor:</label>
+        <select
+          name="proveedor_id"
+          value={compra.proveedor_id}
+          onChange={handleChange}
+          className="form-control mb-2"
+          required
+        >
+          <option value="">Seleccione un proveedor</option>
+          {proveedores.map((prov) => (
+            <option key={prov.id} value={prov.id}>
+              {prov.nombre}
+            </option>
+          ))}
+        </select>
+
+        <label>Materia Prima (Nombre del Insumo):</label>
+        <input
+          name="materia_prima_nombre"
+          value={compra.materia_prima_nombre}
+          onChange={handleChange}
+          className="form-control mb-2"
+          type="text"
+          placeholder="Ej: Harina"
+          required
+        />
+
+        <label>Cantidad Ingresada:</label>
+        <input
+          name="cantidad_ingresada"
+          value={compra.cantidad_ingresada}
+          onChange={handleChange}
+          className="form-control mb-2"
+          type="number"
+          step="0.01"
+          required
+        />
+
+        <label>Costo Total de Compra:</label>
+        <input
+          name="costo_compra"
+          value={compra.costo_compra}
+          onChange={handleChange}
+          className="form-control mb-2"
+          type="number"
+          step="0.01"
+          required
+        />
+
+        <label>Fecha de Ingreso:</label>
+        <input
+          name="fecha_ingreso"
+          value={compra.fecha_ingreso}
+          onChange={handleChange}
+          className="form-control mb-2"
+          type="date"
+          required
+        />
+
+        <label>Fecha de Expiración (opcional):</label>
+        <input
+          name="fecha_expiracion"
+          value={compra.fecha_expiracion}
+          onChange={handleChange}
+          className="form-control mb-3"
+          type="date"
+        />
+
+        <div className="d-flex justify-content-between mt-3">
+        <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={irADashboard} // ← cambio aquí
+      >
+        ← Regresar
+      </button>
+
+          <button
+            type="button"
+            className="btn btn-info"
+            onClick={irAHistorial}
+          >
+            Ver historial de compras
+          </button>
+
+          <button className="btn btn-primary" type="submit">
+            Registrar Lote
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

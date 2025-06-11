@@ -7,6 +7,9 @@ import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
 import Orders from './components/Orders';
 import Providers from './components/Providers';
+import ProveedorForm from './components/proveedores/ProveedorForm';
+import CompraForm from './components/proveedores/CompraForm';
+import HistorialCompras from './components/proveedores/HistorialCompras';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/App.css';
 import Home from './components/Home';
@@ -24,6 +27,9 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/orders" element={<Orders />} />
         <Route path="/providers" element={<Providers />} />
+        <Route path="/providers/proveedor" element={<ProveedorForm />} />
+        <Route path="/providers/compra" element={<CompraForm />} />
+        <Route path="/providers/historial" element={<HistorialCompras />} />
         {/* Agrega más rutas según sea necesario */}
       </Routes>
     </Router>
