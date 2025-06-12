@@ -1,85 +1,90 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { obtenerHistorialCompras } from "../../services/historialComprasServices";
+import React, { useState, useEffect, useCallback } from 'react';
+// --- PASO 1: IMPORTAMOS useNavigate ---
+import { useNavigate } from 'react-router-dom';
+import { obtenerHistorialCompras } from '../../services/proveedoresService';
 
-export default function HistorialCompras() {
-  const [compras, setCompras] = useState([]);
+const HistorialCompras = () => {
+  // --- PASO 2: INICIALIZAMOS useNavigate ---
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const cargarHistorial = async () => {
-      try {
-        const data = await obtenerHistorialCompras();
-        console.log("Historial recibido:", data);
-        setCompras(data);
-      } catch (error) {
-        console.error("Error al cargar historial:", error);
-        if (error.config) {
-          console.error("URL solicitada:", error.config.baseURL + error.config.url);
-        }
-        alert("No se pudo cargar el historial.");
-      }
-    };
-    cargarHistorial();
+  const [historial, setHistorial] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState(null);
+
+  const cargarHistorial = useCallback(async () => {
+    try {
+      setCargando(true);
+      const data = await obtenerHistorialCompras();
+      setHistorial(data);
+      setError(null);
+    } catch (err) {
+      console.error("Error al cargar historial:", err);
+      setError(err.message || "No se pudo cargar el historial de compras.");
+    } finally {
+      setCargando(false);
+    }
   }, []);
 
+  useEffect(() => {
+    cargarHistorial();
+  }, [cargarHistorial]);
+
+  if (cargando) {
+    return <div className="text-center mt-5"><div className="spinner-border" role="status"><span className="visually-hidden">Cargando...</span></div></div>;
+  }
+
+  if (error) {
+    return <div className="alert alert-danger mt-4" role="alert">{error}</div>;
+  }
+
   return (
-    <div className="card shadow p-3 mt-3">
-      <h3 className="mb-3">Historial de Compras</h3>
-
-      <table className="table table-bordered">
-        <thead className="table-light">
-          <tr>
-            <th>Proveedor</th>
-            <th>Materia Prima</th>
-            <th>Cantidad</th>
-            <th>Precio Unitario</th>
-            <th>Fecha de Compra</th>
-            <th>Lote ID</th>
-            <th>Registrado por</th>
-          </tr>
-        </thead>
-        <tbody>
-          {compras.length > 0 ? (
-            compras.map((c) => (
-              <tr key={c.id}>
-                <td>{c.proveedor_nombre}</td>
-                <td>{c.materia_prima_nombre}</td>
-                <td>{c.cantidad}</td>
-                <td>
-                  {c.precio_unitario != null
-                    ? `$${parseFloat(c.precio_unitario).toFixed(2)}`
-                    : "-"}
-                </td>
-                <td>
-                  {c.fecha_compra
-                    ? new Date(c.fecha_compra).toLocaleDateString()
-                    : "-"}
-                </td>
-                <td>{c.lote_id || "-"}</td>
-                <td>{c.nombre_usuario ? `${c.nombre_usuario} ${c.apellido}` : "-"}</td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <td colSpan="7" className="text-center">
-                No hay compras registradas.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      {/* BOTONES ABAJO */}
-      <div className="d-flex justify-content-between mt-3">
-        <button className="btn btn-secondary btn-sm" onClick={() => navigate("/Dashboard")}>
-          ← Regresar al inicio
-        </button>
-
-        <button className="btn btn-primary btn-sm" onClick={() => navigate("/providers/compra")}>
-          ← Regresar al registro de compra
+    <div className="container mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h2>Historial de Compras a Proveedores</h2>
+        {/* --- PASO 3: AÑADIMOS EL BOTÓN DE VOLVER ---
+            Este botón usará la función navigate para volver a la página principal de proveedores.
+        */}
+        <button onClick={() => navigate('/providers')} className="btn btn-secondary">
+          <i className="fas fa-arrow-left me-2"></i>Volver a Proveedores
         </button>
       </div>
+
+      {historial.length === 0 ? (
+        <p>No hay compras registradas en el historial.</p>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-striped table-hover">
+            <thead className="table-dark">
+              <tr>
+                <th>ID Compra</th>
+                <th>Fecha</th>
+                <th>Materia Prima</th>
+                <th>Proveedor</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Costo Total</th>
+                <th>Registrado por</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historial.map((compra) => (
+                <tr key={compra.id}>
+                  <td>{compra.id}</td>
+                  <td>{new Date(compra.fecha_compra).toLocaleDateString()}</td>
+                  <td>{compra.materia_prima_nombre}</td>
+                  <td>{compra.proveedor_nombre}</td>
+                  <td>{compra.cantidad}</td>
+                  <td>${parseFloat(compra.precio_unitario).toFixed(2)}</td>
+                  <td>${(compra.cantidad * compra.precio_unitario).toFixed(2)}</td>
+                  <td>{compra.nombre_usuario || 'No disponible'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default HistorialCompras;

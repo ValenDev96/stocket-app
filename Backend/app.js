@@ -1,40 +1,44 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// Middlewares básicos
 app.use(cors());
 app.use(express.json());
 
-console.log("Cargando rutas...");
-// Rutas existentes
-const rolesRoutes = require('./routes/rolesRoutes');
+// --- CORRECCIÓN: Asegurémonos de que todas las rutas se importen ---
+console.log('Cargando rutas...');
 const authRoutes = require('./routes/authRoutes');
-const movimientosInventarioRoutes = require('./routes/movimientosInventarioRoutes');
-const pedidosRoutes = require('./routes/pedidosRoutes'); // <-- IMPORTAR RUTAS DE PEDIDOS
+const materiaPrimaRoutes = require('./routes/materiaPrimaRoutes');
+const productosTerminadosRoutes = require('./routes/productosTerminadosRoutes');
 const proveedoresRoutes = require('./routes/proveedoresRoutes');
-const materiasPrimasRoutes = require("./routes/materiaPrimaRoutes"); // <-- IMPORTAR RUTAS DE PROVEEDORES
-// Nuevas rutas para alertas
-const alertasRoutes = require('./routes/alertasRoutes'); // <-- IMPORTAR
+const movimientosInventarioRoutes = require('./routes/movimientosInventarioRoutes');
+const alertasRoutes = require('./routes/alertasRoutes');
+const lotesRoutes = require('./routes/lotesRoutes');
+const comprasRoutes = require('./routes/comprasRoutes');
+const pedidosRoutes = require('./routes/pedidosRoutes');
+// Agrega aquí cualquier otro archivo de rutas que tengas
 
-app.use('/api/roles', rolesRoutes);
+// Usar las rutas con sus prefijos de API
 app.use('/api/auth', authRoutes);
-app.use('/api/materiasprimas', materiasPrimasRoutes);
+app.use('/api/materiasprimas', materiaPrimaRoutes);
+app.use('/api/productos-terminados', productosTerminadosRoutes);
+app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/movimientos', movimientosInventarioRoutes);
 app.use('/api/alertas', alertasRoutes);
-app.use('/api/orders',pedidosRoutes); // <-- USAR NUEVAS RUTAS
-app.use('/api/providers',proveedoresRoutes);
-app.use("/api/materias_primas", materiasPrimasRoutes); // <-- USAR NUEVAS RUTAS
+app.use('/api/lotes', lotesRoutes);
+app.use('/api/compras', comprasRoutes);
+app.use('/api/pedidos', pedidosRoutes);
+// ...
 
-console.log("Rutas de autenticación (/api/auth) configuradas.");
-console.log("Rutas de materias primas (/api/materiasprimas) configuradas.");
-console.log("Rutas de movimientos de inventario (/api/movimientos) configuradas.");
-console.log("Rutas de alertas (/api/alertas) configuradas."); // Log de confirmación
-
+// Ruta de prueba para verificar que el servidor está vivo
+app.get('/', (req, res) => {
+  res.send('API de Stocket funcionando correctamente.');
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });

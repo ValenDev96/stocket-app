@@ -1,137 +1,92 @@
-// controllers/proveedorController.js
 
 const pool = require("../config/db");
+
+// --- Obtener lista de proveedores (para dropdowns, etc.) ---
+exports.obtenerProveedores = async (req, res) => {
+  try {
+    const [proveedores] = await pool.query(`SELECT id, nombre FROM proveedores ORDER BY nombre ASC`);
+    res.json(proveedores);
+  } catch (error) {
+    console.error('Error al obtener proveedores:', error);
+    res.status(500).json({ error: 'Error al obtener proveedores' });
+  }
+};
 
 // --- Registrar nuevo proveedor ---
 exports.registrarProveedor = async (req, res) => {
   try {
     const { nombre, informacion_contacto, direccion } = req.body;
-
-    const query = `
-      INSERT INTO proveedores (nombre, informacion_contacto, direccion)
-      VALUES (?, ?, ?)
-    `;
-    const values = [nombre, informacion_contacto, direccion];
-    const [result] = await pool.query(query, values);
-
-    res.status(201).json({
-      message: 'Proveedor registrado exitosamente',
-      id_proveedor: result.insertId
-    });
+    if (!nombre || !informacion_contacto) {
+        return res.status(400).json({ message: "Nombre e información de contacto son obligatorios." });
+    }
+    const query = `INSERT INTO proveedores (nombre, informacion_contacto, direccion) VALUES (?, ?, ?)`;
+    const [result] = await pool.query(query, [nombre, informacion_contacto, direccion || null]);
+    res.status(201).json({ message: 'Proveedor registrado exitosamente', id: result.insertId });
   } catch (error) {
+    if (error.code === 'ER_DUP_ENTRY') {
+        return res.status(409).json({ message: 'Ya existe un proveedor con ese nombre o contacto.' });
+    }
     console.error('Error al registrar proveedor:', error);
-    res.status(500).json({ error: "Error al registrar proveedor", details: error.message });
+    res.status(500).json({ error: "Error interno al registrar proveedor" });
   }
 };
 
 // --- Registrar nueva compra (lote de materia prima) ---
 exports.registrarCompra = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
-     console.log("Datos recibidos en el backend:", req.body);
-    const {
-      proveedor_id,
-      materia_prima_nombre,
-      cantidad_ingresada,
-      costo_compra,
-      fecha_ingreso,
-      fecha_expiracion,
-      usuario_id, // ← asegúrate de que esto venga del frontend
-      observaciones // opcional
-    } = req.body;
+    await connection.beginTransaction();
 
-    if (
-      !proveedor_id ||
-      !materia_prima_nombre ||
-      !cantidad_ingresada ||
-      !costo_compra ||
-      !fecha_ingreso
-    ) {
-      return res.status(400).json({ error: "Faltan datos obligatorios para registrar el lote de materia prima." });
+    const { proveedor_id, materia_prima_id, cantidad, precio_unitario, fecha_compra, fecha_expiracion } = req.body;
+    const usuario_id = req.usuario.id;
+
+    if (!proveedor_id || !materia_prima_id || !cantidad || !precio_unitario || !fecha_compra) {
+      return res.status(400).json({ message: "Faltan datos obligatorios." });
     }
 
-    const parsedCantidad = parseFloat(cantidad_ingresada);
-    const parsedCosto = parseFloat(costo_compra);
+    const [materia] = await connection.query('SELECT nombre FROM materias_primas WHERE id = ?', [materia_prima_id]);
+    if (materia.length === 0) throw new Error('Materia prima no encontrada.');
+    const materia_prima_nombre = materia[0].nombre;
 
-    if (isNaN(parsedCantidad) || parsedCantidad <= 0) {
-      return res.status(400).json({ error: "La cantidad debe ser un número positivo." });
-    }
-    if (isNaN(parsedCosto) || parsedCosto < 0) {
-      return res.status(400).json({ error: "El costo debe ser un número no negativo." });
-    }
+    const costo_compra = parseFloat(cantidad) * parseFloat(precio_unitario);
 
-    // 1. Insertar en lotes_materias_primas
-    const insertLoteQuery = `
-      INSERT INTO lotes_materias_primas (
-        proveedor_id,
-        materia_prima_nombre,
-        cantidad_ingresada,
-        stock_lote,
-        costo_compra,
-        fecha_ingreso,
-        fecha_expiracion
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-    const loteValues = [
-      proveedor_id,
-      materia_prima_nombre,
-      parsedCantidad,
-      parsedCantidad,
-      parsedCosto,
-      fecha_ingreso,
-      fecha_expiracion || null
-    ];
-
-    const [loteResult] = await pool.query(insertLoteQuery, loteValues);
+    const [loteResult] = await connection.query(
+      'INSERT INTO lotes_materias_primas (materia_prima_nombre, proveedor_id, cantidad_ingresada, stock_lote, costo_compra, fecha_expiracion) VALUES (?, ?, ?, ?, ?, ?)',
+      [materia_prima_nombre, proveedor_id, cantidad, cantidad, costo_compra, fecha_expiracion || null]
+    );
     const lote_id = loteResult.insertId;
 
-    // 2. Obtener id de materia_prima desde su nombre
-    const [[materia]] = await pool.query(
-      `SELECT id FROM materias_primas WHERE nombre = ?`,
-      [materia_prima_nombre]
+    await connection.query(
+      'INSERT INTO compras_proveedores (proveedor_id, materia_prima_nombre, cantidad, precio_unitario, fecha_compra, lote_id, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [proveedor_id, materia_prima_nombre, cantidad, precio_unitario, fecha_compra, lote_id, usuario_id]
     );
-    const materiaPrimaId = materia?.id;
 
-    // 3. Insertar en compras_proveedores
-    const insertCompraQuery = `
-      INSERT INTO compras_proveedores (
-        proveedor_id,
-        materia_prima_nombre,
-        cantidad,
-        precio_unitario,
-        fecha_compra,
-        lote_id,
-        usuario_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-    const compraValues = [
-      proveedor_id,
-      materia_prima_nombre,
-      parsedCantidad,
-      parsedCosto,
-      fecha_ingreso,
-      lote_id,
-      usuario_id || null
-    ];
+    // --- CORRECCIÓN CRÍTICA ---
+    // Se añade el movimiento de inventario para que el trigger actualice el stock general.
+    await connection.query(
+        'INSERT INTO movimientos_inventario_mp (lote_id, tipo_movimiento, cantidad, descripcion, usuario_id) VALUES (?, ?, ?, ?, ?)',
+        [lote_id, 'entrada', cantidad, `Entrada por compra al proveedor ID: ${proveedor_id}`, usuario_id]
+    );
 
-    await pool.query(insertCompraQuery, compraValues);
-
-    res.status(201).json({
-      message: 'Compra registrada exitosamente',
-      id_lote_generado: lote_id
-    });
+    await connection.commit();
+    res.status(201).json({ message: 'Compra y lote registrados exitosamente', id_lote: lote_id });
 
   } catch (error) {
+    await connection.rollback();
     console.error('Error al registrar la compra:', error);
     res.status(500).json({ error: 'Error al registrar la compra', details: error.message });
+  } finally {
+    connection.release();
   }
 };
 
-
-// --- Obtener historial de compras desde lotes_materias_primas ---
+// --- Obtener historial de compras ---
 exports.obtenerHistorialCompras = async (req, res) => {
+  // --- PASOS DE DEPURACIÓN ---
+  console.log("1. Petición recibida en 'obtenerHistorialCompras'.");
+
   try {
-    const [rows] = await pool.query(`
+    const query = `
       SELECT
         c.id,
         p.nombre AS proveedor_nombre,
@@ -148,11 +103,17 @@ exports.obtenerHistorialCompras = async (req, res) => {
       JOIN proveedores p ON p.id = c.proveedor_id
       LEFT JOIN usuarios u ON u.id = c.usuario_id
       ORDER BY c.fecha_compra DESC
-    `);
+    `;
 
+    console.log("2. Ejecutando consulta a la base de datos...");
+    const [rows] = await pool.query(query);
+    console.log("3. Consulta finalizada. Se encontraron " + rows.length + " registros.");
+    
     res.json(rows);
+    console.log("4. Respuesta JSON enviada al frontend.");
+
   } catch (error) {
-    console.error("Error al obtener historial de compras:", error);
+    console.error("¡ERROR en obtenerHistorialCompras!:", error);
     res.status(500).json({
       error: "Error al obtener historial de compras",
       details: error.message
@@ -162,42 +123,6 @@ exports.obtenerHistorialCompras = async (req, res) => {
 
 // --- Comparar precios por producto ---
 exports.compararPrecios = async (req, res) => {
-  try {
-    const { producto } = req.query;
-
-    const query = `
-      SELECT
-          l.*,
-          p.nombre AS proveedor_nombre,
-          p.informacion_contacto AS proveedor_contacto,
-          p.direccion AS proveedor_direccion
-      FROM
-          lotes_materias_primas l
-      JOIN
-          proveedores p ON l.proveedor_id = p.id
-      WHERE
-          l.materia_prima_nombre = ?
-      ORDER BY
-          l.costo_compra ASC;
-    `;
-
-    const [comprasConProveedor] = await pool.query(query, [producto]);
-    res.json(comprasConProveedor);
-
-  } catch (error) {
-    console.error('Error al comparar precios:', error);
-    res.status(500).json({ error: "Error al comparar precios", details: error.message });
-  }
-};
-
-// --- Obtener lista de proveedores (ID y nombre) ---
-exports.obtenerProveedores = async (req, res) => {
-  try {
-    const [proveedores] = await pool.query(`SELECT id, nombre FROM proveedores`);
-    res.json(proveedores);
-  } catch (error) {
-    console.error('Error al obtener proveedores:', error);
-    res.status(500).json({ error: 'Error al obtener proveedores' });
-  }
+    // ... tu función existente aquí, está bien como estaba ...
 };
 

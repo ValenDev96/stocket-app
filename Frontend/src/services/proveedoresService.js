@@ -1,85 +1,78 @@
 
-const API_URL = 'http://localhost:3000/api/providers'; // Asegúrate que coincida con tu backend
-const API_MATERIAS_PRIMAS_URL = 'http://localhost:3001/api/materias_primas'; // Nueva constante para materias primas
+const API_URL = 'http://localhost:3000/api/proveedores';
 
-// Crear un nuevo proveedor
-export async function crearProveedor(nuevoProveedor) {
+// --- Función Auxiliar para manejar las peticiones a la API ---
+// Esta función centraliza la lógica de autenticación y manejo de errores.
+async function apiFetch(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('token');
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
 
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(nuevoProveedor),
-  });
+  const config = {
+    method: method,
+    headers: headers,
+  };
 
-  if (!response.ok) {
-    throw new Error('Error al crear proveedor');
+  if (body) {
+    config.body = JSON.stringify(body);
   }
 
-  return await response.json();
-}
+  const response = await fetch(endpoint, config);
 
-// Registrar una compra
-export async function registrarCompra(compra) {
-  const token = localStorage.getItem('token');
-
-  const response = await fetch(`${API_URL}/compras`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(compra),
-  });
-
+  // Manejo de errores mejorado: Intenta leer el mensaje de error del backend.
   if (!response.ok) {
-    throw new Error('Error al registrar compra');
+    const errorData = await response.json().catch(() => ({ message: `Error en la petición: ${response.statusText}` }));
+    throw new Error(errorData.message || 'Ocurrió un error desconocido.');
+  }
+
+  // Si la respuesta no tiene contenido (ej. en un DELETE), no intenta parsear JSON.
+  if (response.status === 204) {
+    return null;
   }
 
   return await response.json();
 }
 
 
+// --- Las funciones de servicio ahora son más simples y limpias ---
 
+/**
+ * Obtiene la lista de todos los proveedores.
+ */
+export const obtenerProveedores = () => {
+  return apiFetch(API_URL);
+};
 
-// Comparar precios por producto (si lo usas en el futuro)
-export async function compararPrecios(producto) {
-  const token = localStorage.getItem('token');
+/**
+ * Crea un nuevo proveedor.
+ * @param {object} nuevoProveedor - Datos del proveedor a crear.
+ */
+export const crearProveedor = (nuevoProveedor) => {
+  return apiFetch(API_URL, 'POST', nuevoProveedor);
+};
 
-  const response = await fetch(`${API_URL}/comparar/precios?producto=${encodeURIComponent(producto)}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+/**
+ * Registra una nueva compra y su lote asociado.
+ * @param {object} compraData - Datos de la compra.
+ */
+export const registrarCompra = (compraData) => {
+  return apiFetch(`${API_URL}/compras`, 'POST', compraData);
+};
 
-  const data = await response.json();
+/**
+ * Obtiene el historial de todas las compras registradas.
+ */
+export const obtenerHistorialCompras = () => {
+  return apiFetch(`${API_URL}/compras`);
+};
 
-  if (!response.ok) {
-    throw new Error('Error al comparar precios');
-  }
-
-  return data;
-}
-// Obtener todos los proveedores (solo id y nombre)
-export async function obtenerProveedores() {
-  const token = localStorage.getItem('token');
-
-  const response = await fetch(`${API_URL}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('Error al obtener proveedores');
-  }
-
-  return await response.json();
-}
+/**
+ * Compara precios de un producto entre diferentes proveedores.
+ * @param {string} nombreProducto - El nombre de la materia prima a comparar.
+ */
+export const compararPrecios = (nombreProducto) => {
+  const endpoint = `${API_URL}/comparar-precios?producto=${encodeURIComponent(nombreProducto)}`;
+  return apiFetch(endpoint);
+};

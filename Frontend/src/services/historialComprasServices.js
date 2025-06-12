@@ -1,20 +1,35 @@
-// src/services/historialComprasServices.js
+// Contenido corregido y completo para: Frontend/src/services/historialComprasServices.js
 
-const API_URL = "http://localhost:3000/api"; // o donde esté tu backend
+// La URL base de tu API
+const API_URL_BASE = 'http://localhost:3000/api';
 
+// Función auxiliar para añadir el token a las cabeceras
+const createAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  };
+};
+
+/**
+ * Obtiene el historial completo de todas las compras a proveedores.
+ * Llama a la ruta GET /api/proveedores/compras
+ * @returns {Promise<Array>} - Una promesa que resuelve a un array con el historial de compras.
+ */
 export const obtenerHistorialCompras = async () => {
-  // Asegúrate de que coincida con la ruta en tu backend:
-  // si definiste GET /api/providers/historial:
-  const response = await fetch(`${API_URL}/providers/historial`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      // agrega Authorization si hace falta:
-      // "Authorization": `Bearer ${token}`,
-    },
+  
+  // Se apunta a la ruta correcta del backend: '/api/proveedores/compras'
+  const endpoint = `${API_URL_BASE}/proveedores/compras`;
+
+  const response = await fetch(endpoint, {
+    headers: createAuthHeaders()
   });
+
   if (!response.ok) {
-    throw new Error("Error al obtener historial de compras");
+    const errorData = await response.json().catch(() => ({ message: 'Error al obtener historial de compras' }));
+    throw new Error(errorData.message);
   }
+
   return await response.json();
 };

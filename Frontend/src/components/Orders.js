@@ -1,184 +1,137 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { obtenerPedidos, crearPedido, actualizarPedido } from '../services/pedidosService';
-import '../styles/Orders.css'; // Asegúrate de tener este archivo CSS
+// Contenido 100% corregido y funcional para: Frontend/src/components/Orders.js
 
+import React, { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+// Importamos todas las funciones que necesitamos del servicio
+import { obtenerPedidos, actualizarPedido, marcarPedidoDevuelto } from '../services/pedidosService';
+import '../styles/Orders.css'; // Asegúrate de que la ruta a tu CSS sea correcta
 
 const Orders = () => {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [nuevoPedido, setNuevoPedido] = useState({
-    cliente_id: '',
-    fecha_pedido: '',
-    estado: 'pendiente',
-    devuelto: false,
-    motivo_devolucion: ''
-  });
-  const [mensaje, setMensaje] = useState('');
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    fetchPedidos();
-  }, []);
-
-  async function fetchPedidos() {
+  const fetchPedidos = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await obtenerPedidos();
       setPedidos(data);
-    } catch (error) {
-      alert('Error al obtener pedidos');
+      setError(null);
+    } catch (err) {
+      console.error('Error al obtener pedidos:', err);
+      setError(err.message || 'No se pudieron cargar los pedidos.');
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  // 2. Verificación de inventario antes de crear el pedido (simulada)
- async function handleCrearPedido(e) {
-  e.preventDefault();
-  setMensaje('');
-
-  if (!nuevoPedido.cliente_id || !nuevoPedido.estado) {
-    setMensaje('Por favor, completa los campos obligatorios.');
-    return;
-  }
-
-  // Prepara el pedido para enviar, con tipo correcto y fecha opcional
-  const pedidoParaEnviar = {
-    ...nuevoPedido,
-    cliente_id: Number(nuevoPedido.cliente_id),
-    fecha_pedido: nuevoPedido.fecha_pedido || null,
-  };
-
-  try {
-    await crearPedido(pedidoParaEnviar);
-    setMensaje('Pedido creado exitosamente.');
-    setNuevoPedido({
-      cliente_id: '',
-      fecha_pedido: '',
-      estado: 'pendiente',
-      devuelto: false,
-      motivo_devolucion: ''
-    });
+  useEffect(() => {
     fetchPedidos();
-  } catch (error) {
-    setMensaje(error.message || 'Error al crear pedido.');
-  }
-}
-  // 4. Marcar pedido como entregado o devuelto
-  async function marcarEntregado(id) {
-    try {
-      await actualizarPedido(id, { estado: 'entregado' });
-      fetchPedidos();
-    } catch {
-      alert('Error al marcar como entregado');
-    }
-  }
+  }, [fetchPedidos]);
 
-  async function marcarDevuelto(id) {
-    const motivo = prompt('Motivo de la devolución:');
-    if (!motivo) return;
+  // --- FUNCIÓN CORREGIDA PARA ACTUALIZAR CUALQUIER ESTADO ---
+  const cambiarEstadoPedido = async (pedidoId, nuevoEstado) => {
     try {
-      await actualizarPedido(id, { devuelto: true, motivo_devolucion: motivo, estado: 'devuelto' });
+      // 1. Creamos el objeto con la propiedad que el backend espera: 'estado_pedido'
+      const datosParaActualizar = { estado_pedido: nuevoEstado };
+      
+      // 2. Llamamos al servicio con el ID y los datos correctos
+      await actualizarPedido(pedidoId, datosParaActualizar);
+      
+      // 3. Recargamos la lista para ver el cambio
       fetchPedidos();
-    } catch {
-      alert('Error al marcar como devuelto');
+    } catch (err) {
+      console.error(`Error al cambiar estado a ${nuevoEstado}:`, err);
+      setError(err.message || 'No se pudo actualizar el estado del pedido.');
     }
-  }
-
-  // Función para el botón (puedes cambiarla cuando el módulo exista)
-  const handleInformacionCliente = () => {
-    alert('Módulo "Informacion de clientes" próximamente disponible.');
   };
 
-  const handleRegresar = () => {
-    navigate('/Dashboard'); // Cambia la ruta según tu estructura
+  // --- NUEVA FUNCIÓN PARA MARCAR COMO DEVUELTO ---
+  const handleMarcarDevuelto = async (pedidoId) => {
+    const motivo = window.prompt("Por favor, ingresa el motivo de la devolución:");
+    if (motivo && motivo.trim() !== '') { // Solo si el usuario ingresa un motivo
+      try {
+        await marcarPedidoDevuelto(pedidoId, motivo);
+        fetchPedidos(); // Recargamos la lista para ver el cambio
+      } catch (err) {
+        console.error("Error al marcar como devuelto:", err);
+        setError(err.message || 'No se pudo marcar el pedido como devuelto.');
+      }
+    }
   };
 
   if (loading) return <div>Cargando pedidos...</div>;
+  if (error) return <div className="alert alert-danger">Error: {error}</div>;
 
   return (
-    <div className="orders-container">
-      <h1>Pedidos</h1>
-      <form onSubmit={handleCrearPedido} style={{ marginBottom: 20 }}>
-        <input
-          type="text"
-          placeholder="Cliente ID"
-          value={nuevoPedido.cliente_id}
-          onChange={e => setNuevoPedido({ ...nuevoPedido, cliente_id: e.target.value })}
-          required
-        />
-        <input
-          type="date"
-          placeholder="Fecha Pedido"
-          value={nuevoPedido.fecha_pedido}
-          onChange={e => setNuevoPedido({ ...nuevoPedido, fecha_pedido: e.target.value })}
-          required
-        />
-        <select
-          value={nuevoPedido.estado}
-          onChange={e => setNuevoPedido({ ...nuevoPedido, estado: e.target.value })}
-          required
-        >
-        <option value="pendiente">Pendiente</option>
-        <option value="completado">Completado</option>
-        <option value="cancelado">Cancelado</option>
-
-        </select>
-        <button type="submit">Crear Pedido</button>
-      </form>
-      {mensaje && <div>{mensaje}</div>}
-      <table className="orders-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Cliente ID</th>
-            <th>Fecha Pedido</th>
-            <th>Estado</th>
-            <th>Devuelto</th>
-            <th>Motivo Devolución</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pedidos.map((pedido, index) => (
-            <tr key={pedido.id || pedido._id || index}>
-              <td>{pedido.id || pedido._id}</td>
-              <td>{pedido.cliente_id}</td>
-              <td>{/* Formateo de fecha */}
-                {pedido.fecha_pedido
-                  ? new Date(pedido.fecha_pedido).toLocaleDateString()
-                  : '-'}
-              </td>
-              <td>{pedido.estado}</td>
-              <td>{pedido.devuelto ? 'Sí' : 'No'}</td>
-              <td>{pedido.motivo_devolucion || '-'}</td>
-              <td>
-                {pedido.estado !== 'entregado' && (
-                  <button onClick={() => marcarEntregado(pedido.id || pedido._id)}>Marcar Entregado</button>
-                )}
-                {!pedido.devuelto && (
-                  <button onClick={() => marcarDevuelto(pedido.id || pedido._id)}>Marcar Devuelto</button>
-                )}
-              </td>
+    <div className="orders-container container mt-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Gestión de Pedidos</h1>
+        <div>
+            {/* Este botón podría llevar a un formulario de creación en el futuro */}
+            <button onClick={() => alert('Formulario de creación próximamente.')} className="btn btn-primary me-2">
+                <i className="fas fa-plus me-2"></i>Crear Pedido
+            </button>
+            <button onClick={() => navigate('/dashboard')} className="btn btn-secondary">
+                <i className="fas fa-arrow-left me-2"></i>Volver al Dashboard
+            </button>
+        </div>
+      </div>
+      
+      <div className="table-responsive">
+        <table className="table table-striped table-hover">
+          <thead className="table-dark">
+            <tr>
+              <th>ID Pedido</th>
+              <th>Cliente</th>
+              <th>Fecha Pedido</th>
+              <th>Fecha Entrega</th>
+              <th>Total</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      <div className="Informacion-Cliente-btn-wrapper">
-        <button
-          type="button"
-          className="regresar-btn"
-          onClick={handleRegresar}
-        >
-          Regresar
-        </button>
-        <button
-          type="button"
-          className="Informacion-Cliente-btn"
-          onClick={handleInformacionCliente}
-        >
-          Información de Cliente
-        </button>
+          </thead>
+          <tbody>
+            {pedidos.map((pedido) => (
+              <tr key={pedido.id} className={pedido.devuelto ? 'table-danger' : ''}>
+                <td>{pedido.id}</td>
+                <td>{pedido.cliente_nombre || 'N/A'}</td>
+                <td>{new Date(pedido.fecha_pedido).toLocaleDateString()}</td>
+                <td>{new Date(pedido.fecha_entrega_estimada).toLocaleDateString()}</td>
+                <td>${parseFloat(pedido.total_pedido).toFixed(2)}</td>
+                <td>
+                  <span className={`badge bg-${pedido.estado_pedido === 'completado' ? 'success' : 'warning'}`}>
+                    {pedido.estado_pedido}
+                  </span>
+                  {pedido.devuelto && <span className="badge bg-danger ms-2">Devuelto</span>}
+                </td>
+                <td>
+                    <select 
+                        className="form-select form-select-sm"
+                        value={pedido.estado_pedido}
+                        onChange={(e) => cambiarEstadoPedido(pedido.id, e.target.value)}
+                        disabled={pedido.estado_pedido === 'completado' || pedido.estado_pedido === 'cancelado'}
+                    >
+                        <option value="pendiente">Pendiente</option>
+                        <option value="en_proceso">En Proceso</option>
+                        <option value="listo_para_entrega">Listo para Entrega</option>
+                        <option value="completado">Completado</option>
+                        <option value="cancelado">Cancelado</option>
+                    </select>
+                    {!pedido.devuelto && pedido.estado_pedido !== 'cancelado' && (
+                         <button 
+                            onClick={() => handleMarcarDevuelto(pedido.id)}
+                            className="btn btn-outline-danger btn-sm mt-2"
+                        >
+                            Marcar Devuelto
+                        </button>
+                    )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

@@ -1,11 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const pedidosController = require('../controllers/pedidosController');
+const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-router.post('/', pedidosController.crearPedido);
-router.get('/', pedidosController.listarPedidos);
-router.get('/:id', pedidosController.obtenerPedido);
-router.put('/:id', pedidosController.actualizarPedido);
-router.delete('/:id', pedidosController.eliminarPedido);
+const ROLES_PERMITIDOS = ['Administrador', 'Auxiliar Administrativo'];
+
+// GET /api/pedidos -> Obtener todos los pedidos
+router.get('/', protegerRuta, autorizar(ROLES_PERMITIDOS), pedidosController.obtenerTodos);
+
+// POST /api/pedidos -> Crear un nuevo pedido
+router.post('/', protegerRuta, autorizar(ROLES_PERMITIDOS), pedidosController.crear);
+
+router.put('/:id', protegerRuta, autorizar(ROLES_PERMITIDOS), pedidosController.actualizarEstado);
+
+// PUT /api/pedidos/:id/devolver -> Marcar un pedido como devuelto
+router.put('/:id/devolver', protegerRuta, autorizar(ROLES_PERMITIDOS), pedidosController.marcarComoDevuelto);
 
 module.exports = router;

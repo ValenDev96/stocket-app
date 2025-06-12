@@ -1,47 +1,68 @@
-// Backend/routes/materiasPrimasRoutes.js
+// Contenido corregido para: Backend/routes/materiaPrimaRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const materiasPrimasController = require('../controllers/materiaPrimaController');
-const { protegerRuta, autorizarRol } = require('../middleware/authMiddleware');
+const materiaPrimaController = require('../controllers/materiaPrimaController');
 
-console.log('[materiasPrimasRoutes.js] Configurando rutas para materias primas...'); // Log al cargar el archivo
+// Importamos las funciones con los nombres correctos desde el middleware
+const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-const rolesParaVerInventario = ['administrador', 'bodega', 'produccion'];
-const rolesParaModificarInventario = ['administrador', 'bodega'];
+// Definimos los roles que pueden realizar acciones de modificación
+const rolesParaModificarInventario = ['Administrador', 'Líder de Bodega'];
+const rolesParaVerInventario = ['Administrador', 'Líder de Bodega', 'Líder de Producción'];
 
+// Rutas para Materias Primas
+
+// Obtener todas las materias primas (GET /)
+router.get(
+    '/',
+    protegerRuta,
+    autorizar(rolesParaVerInventario),
+    materiaPrimaController.obtenerTodasMateriasPrimas
+);
+
+// Crear una nueva materia prima (POST /)
 router.post(
     '/',
     protegerRuta,
-    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden crear
-    materiasPrimasController.crearMateriaPrima
+    // --- CORRECCIÓN AQUÍ ---
+    autorizar(rolesParaModificarInventario), // Se usa 'autorizar'
+    materiaPrimaController.crearMateriaPrima
 );
 
-router.get(
-    '/',
-    protegerRuta,
-    autorizarRol(rolesParaVerInventario),
-    materiasPrimasController.obtenerTodasMateriasPrimas
-);
-
+// Obtener una materia prima por ID (GET /:id)
 router.get(
     '/:id',
     protegerRuta,
-    autorizarRol(rolesParaVerInventario),
-    materiasPrimasController.obtenerMateriaPrimaPorId
+    autorizar(rolesParaVerInventario),
+    materiaPrimaController.obtenerMateriaPrimaPorId
 );
 
+// Actualizar una materia prima (PUT /:id)
 router.put(
     '/:id',
     protegerRuta,
-    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden actualizar
-    materiasPrimasController.actualizarMateriaPrima
+    // --- CORRECCIÓN AQUÍ ---
+    autorizar(rolesParaModificarInventario), // Se usa 'autorizar'
+    materiaPrimaController.actualizarMateriaPrima
 );
 
+// Eliminar una materia prima (DELETE /:id)
 router.delete(
     '/:id',
     protegerRuta,
-    autorizarRol(rolesParaModificarInventario), // Solo admin y bodega pueden eliminar
-    materiasPrimasController.eliminarMateriaPrima
+    // --- CORRECCIÓN AQUÍ ---
+    autorizar(['Administrador']), // Solo el Administrador puede eliminar
+    materiaPrimaController.eliminarMateriaPrima
 );
+
+// Ruta para obtener solo nombres (para dropdowns)
+router.get(
+    '/nombres/lista', // Ruta específica para evitar conflicto con /:id
+    protegerRuta,
+    autorizar(rolesParaVerInventario),
+    materiaPrimaController.obtenerNombresMateriasPrimas
+);
+
 
 module.exports = router;

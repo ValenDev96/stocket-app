@@ -1,7 +1,13 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react'; // <-- Importar useMemo
+// Contenido corregido para: Dashboard.js
+
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../../src/styles/Dashboard.css';
-import * as inventarioService from '../../src/services/inventarioService';
+
+// --- CORRECCIÓN ---
+// La ruta de importación ha sido corregida. 
+// Desde 'src/components/', la ruta correcta para llegar a 'src/services/' es '../services/'.
+import * as inventarioService from '../services/inventarioService';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -9,14 +15,9 @@ function Dashboard() {
   const token = localStorage.getItem('token');
   const usuarioString = localStorage.getItem('usuario');
 
-  // --- INICIO DE LA CORRECCIÓN ---
-  // Usamos useMemo para "memorizar" el objeto usuario.
-  // Solo se volverá a parsear si usuarioString (la cadena de texto del localStorage) cambia.
-  // Esto proporciona una referencia estable para el objeto 'usuario' a través de los renders.
   const usuario = useMemo(() => {
     return usuarioString ? JSON.parse(usuarioString) : null;
   }, [usuarioString]);
-  // --- FIN DE LA CORRECCIÓN ---
 
   const [alertas, setAlertas] = useState([]);
   const [cargandoAlertas, setCargandoAlertas] = useState(false);
@@ -29,7 +30,6 @@ function Dashboard() {
   const ROLES_ACCESO_PRODUCCION = useMemo(() => [1, 3, 4], []);
 
   const cargarAlertas = useCallback(async () => {
-    // Esta condición ahora usa el 'usuario' memoizado.
     if (token && usuario && ROLES_PARA_VER_ALERTAS.includes(usuario.rol_id)) {
       setCargandoAlertas(true);
       setErrorAlertas('');
@@ -45,7 +45,6 @@ function Dashboard() {
     } else {
       setAlertas([]);
     }
-    // El useCallback ahora depende de 'token' y 'usuario' (que es estable gracias a useMemo).
   }, [token, usuario, ROLES_PARA_VER_ALERTAS]);
 
   useEffect(() => {
@@ -54,7 +53,6 @@ function Dashboard() {
     } else {
       cargarAlertas();
     }
-    // El array de dependencias ahora es estable y no causará un bucle.
   }, [token, navigate, cargarAlertas]);
 
   const handleLogout = () => {
@@ -69,7 +67,7 @@ function Dashboard() {
       case 'inventario': navigate('/inventory'); break;
       case 'proveedores': navigate('/providers'); break;
       case 'pedidos': navigate ('/orders'); break;
-      case 'produccion': console.log('Navegar a Producción'); break;
+      case 'produccion': console.log('Navegar a Producción'); break; // Ruta de producción no definida en App.js
       default: console.log(`Sección no reconocida: ${section}`);
     }
   };
@@ -84,16 +82,15 @@ function Dashboard() {
   const puedeVerProduccion = ROLES_ACCESO_PRODUCCION.includes(usuario.rol_id);
   const puedeVerAlertas = ROLES_PARA_VER_ALERTAS.includes(usuario.rol_id);
 
-  const renderAlertaItem = (alerta) => {
+  const renderAlertaItem = (alerta, index) => { // Añadido index para una key más robusta
     let mensajeDetallado = alerta.mensaje_alerta;
-    if (alerta.tipo_alerta === 'bajo_stock') {
-      mensajeDetallado = `Stock bajo para ${alerta.nombre_materia_prima} (${alerta.stock_actual} ${alerta.unidad}). Umbral: ${alerta.umbral_alerta} ${alerta.unidad}.`;
-    } else if (alerta.tipo_alerta === 'expiracion') {
-      const fechaExp = alerta.fecha_expiracion ? new Date(alerta.fecha_expiracion).toLocaleDateString() : 'N/A';
-      mensajeDetallado = `${alerta.nombre_materia_prima} está próximo a expirar o ha expirado (Fecha: ${fechaExp}).`;
-    }
+    // La lógica de tu backend ya crea un 'mensaje' completo, así que usamos ese.
+    // Si no, esta lógica de abajo es útil.
+    mensajeDetallado = alerta.mensaje || 'Alerta sin descripción.';
+
+    // Usamos el índice en la key para asegurar unicidad si los IDs de alerta pudieran repetirse entre tipos
     return (
-      <li key={alerta.alerta_id} className={`alerta-item alerta-tipo-${alerta.tipo_alerta}`}>
+      <li key={`${alerta.tipo_alerta}-${alerta.alerta_id || index}`} className={`alerta-item alerta-tipo-${alerta.tipo_alerta}`}>
         ⚠️ {mensajeDetallado}
       </li>
     );

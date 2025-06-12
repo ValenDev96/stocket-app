@@ -1,27 +1,32 @@
+// Contenido corregido para: Backend/routes/movimientosInventarioRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const movimientosInventarioController = require('../controllers/movimientosInventarioController');
-const { protegerRuta, autorizarRol } = require('../middleware/authMiddleware');
+const movimientosController = require('../controllers/movimientosInventarioController');
+// Se importa 'autorizar', que es el nombre correcto de la función en el middleware
+const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-// Roles que pueden registrar movimientos y ver historial (ajustar según necesidad)
-const ROLES_PERMITIDOS_GESTION_MOVIMIENTOS = ['administrador', 'bodega'];
-const ROLES_PERMITIDOS_VER_MOVIMIENTOS = ['administrador', 'bodega', 'produccion'];
+// Se definen los roles que tienen permiso para gestionar movimientos
+const ROLES_PERMITIDOS_GESTION_MOVIMIENTOS = ['Administrador', 'Líder de Bodega'];
 
-// Registrar un nuevo movimiento de inventario (entrada o salida)
-// La materia_prima_id se espera en el cuerpo de la solicitud
+// Ruta para registrar un nuevo movimiento
 router.post(
     '/',
     protegerRuta,
-    autorizarRol(ROLES_PERMITIDOS_GESTION_MOVIMIENTOS),
-    movimientosInventarioController.registrarMovimiento
+    // --- CORRECCIÓN AQUÍ ---
+    // Se usa 'autorizar' en lugar de 'autorizarRol'
+    autorizar(ROLES_PERMITIDOS_GESTION_MOVIMIENTOS),
+    movimientosController.registrarMovimiento // Asegúrate de que este nombre coincida con tu controlador
 );
 
-// Obtener el historial de movimientos para una materia prima específica
+// Ruta para obtener el historial de movimientos de una materia prima específica
 router.get(
-    '/:materiaPrimaId', // El ID de la materia prima se pasa como parámetro en la URL
+    '/:materiaPrimaId',
     protegerRuta,
-    autorizarRol(ROLES_PERMITIDOS_VER_MOVIMIENTOS),
-    movimientosInventarioController.obtenerMovimientosPorMateriaPrima
+    // --- CORRECCIÓN AQUÍ ---
+    // Se usa 'autorizar' en lugar de 'autorizarRol'
+    autorizar(ROLES_PERMITIDOS_GESTION_MOVIMIENTOS),
+    movimientosController.obtenerMovimientosPorMateriaPrima // Asegúrate de que este nombre coincida con tu controlador
 );
 
 module.exports = router;

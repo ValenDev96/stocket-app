@@ -1,26 +1,22 @@
+// Contenido corregido y final para: Backend/routes/alertasRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const alertasController = require('../controllers/alertasController');
-const { protegerRuta, autorizarRol } = require('../middleware/authMiddleware');
 
-// Roles que pueden ver las alertas (ej. admin, bodega, producción)
-// Ajustar según los roles que realmente necesiten esta información.
-const ROLES_PERMITIDOS_VER_ALERTAS = ['administrador', 'bodega', 'produccion'];
+// Asegúrate de que el nombre del controlador y la función sean correctos
+const alertasController = require('../controllers/alertasController'); 
+const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-// Obtener todas las alertas activas
+const ROLES_PERMITIDOS_VER_ALERTAS = ['Administrador', 'Líder de Bodega', 'Líder de Producción'];
+
+// Ruta para obtener las alertas activas
 router.get(
-    '/activas', // La ruta completa será /api/alertas/activas
+    '/activas',
     protegerRuta,
-    autorizarRol(ROLES_PERMITIDOS_VER_ALERTAS),
-    alertasController.obtenerAlertasActivas
+    // Se usa 'autorizar' que es la función correcta
+    autorizar(ROLES_PERMITIDOS_VER_ALERTAS), 
+    // Se usa 'obtenerAlertasActivas' que es la función correcta del controlador
+    alertasController.obtenerAlertasActivas 
 );
-
-// Opcional: Ruta para marcar una alerta como gestionada (si implementas esa funcionalidad)
-// router.put(
-//     '/:alertaId/gestionar',
-//     protegerRuta,
-//     autorizarRol(['administrador', 'bodega']), // Solo ciertos roles podrían gestionar alertas
-//     alertasController.marcarAlertaGestionada 
-// );
 
 module.exports = router;

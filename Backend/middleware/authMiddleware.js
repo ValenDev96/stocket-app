@@ -1,63 +1,70 @@
-// Backend/middleware/authMiddleware.js
+// Contenido corregido y completo para: Backend/middleware/authMiddleware.js
+
 const jwt = require('jsonwebtoken');
-require('dotenv').config();
+const pool = require('../config/db');
 
-const ROLES = {
-    1: 'administrador',
-    2: 'auxiliar',
-    3: 'bodega',
-    4: 'produccion'
-};
-
+// 1. Middleware para proteger rutas (verifica si hay un token válido)
 exports.protegerRuta = async (req, res, next) => {
-    let token;
-    console.log('[AuthMiddleware] Verificando token...'); // Log
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  let token;
 
-            req.usuario = {
-                id: decoded.id,
-                nombre_usuario: decoded.nombre_usuario,
-                rol_id: decoded.rol_id,
-                rol_nombre: ROLES[decoded.rol_id]
-            };
-            console.log('[AuthMiddleware] Token válido. Usuario:', req.usuario); // Log Detallado del Usuario
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      // Obtener el token de la cabecera
+      token = req.headers.authorization.split(' ')[1];
+      
+      // Verificar el token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Obtener el usuario desde la BD (sin la contraseña) y adjuntarlo a la solicitud
+      const [usuarios] = await pool.query('SELECT id, nombre_usuario, rol_id FROM usuarios WHERE id = ?', [decoded.id]);
+      
+      if (usuarios.length === 0) {
+        return res.status(401).json({ message: 'No autorizado, usuario no encontrado.' });
+      }
+      
+      req.usuario = usuarios[0];
+      next();
 
-            if (!req.usuario.rol_nombre) {
-                console.error(`[AuthMiddleware] Rol ID ${decoded.rol_id} no mapeado.`);
-                return res.status(403).json({ message: 'Acceso prohibido. Rol de usuario desconocido.' });
-            }
-            next();
-        } catch (error) {
-            console.error('[AuthMiddleware] Error de autenticación de token:', error.message);
-            return res.status(401).json({ message: 'No autorizado, el token falló o es inválido.' });
-        }
+    } catch (error) {
+      console.error(error);
+      return res.status(401).json({ message: 'No autorizado, token inválido.' });
     }
-    if (!token) {
-        console.log('[AuthMiddleware] No se proporcionó token.'); // Log
-        return res.status(401).json({ message: 'No autorizado, no se proporcionó token.' });
-    }
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: 'No autorizado, no se proporcionó token.' });
+  }
 };
 
-exports.autorizarRol = (rolesPermitidosArray) => {
-    return (req, res, next) => {
-        console.log(`[AuthMiddleware] Verificando autorización. Rol del usuario: ${req.usuario?.rol_nombre}. Roles permitidos: ${rolesPermitidosArray.join(', ')}`); // Log
 
-        if (!req.usuario || !req.usuario.rol_nombre) {
-            console.log('[AuthMiddleware] Usuario no autenticado o rol_nombre no disponible para autorización.'); // Log
-            return res.status(401).json({ message: 'Usuario no autenticado correctamente para verificación de rol.' });
+// --- NUEVA FUNCIÓN ---
+// 2. Middleware para autorizar por rol
+exports.autorizar = (rolesPermitidos) => {
+  return async (req, res, next) => {
+    try {
+        if (!req.usuario || !req.usuario.rol_id) {
+            return res.status(403).json({ message: 'No tienes permiso para realizar esta acción (rol no identificado).' });
         }
 
-        const tienePermiso = rolesPermitidosArray.includes(req.usuario.rol_nombre);
-        console.log(`[AuthMiddleware] ¿Tiene permiso?: ${tienePermiso}`); // Log
+        // Obtener el nombre del rol del usuario desde la base de datos
+        const [roles] = await pool.query('SELECT nombre_rol FROM roles WHERE id = ?', [req.usuario.rol_id]);
+        
+        if (roles.length === 0) {
+             return res.status(403).json({ message: 'No tienes permiso para realizar esta acción (rol no válido).' });
+        }
+        
+        const nombreRolUsuario = roles[0].nombre_rol;
 
-        if (tienePermiso) {
-            next();
+        // Verificar si el rol del usuario está en la lista de roles permitidos para la ruta
+        if (rolesPermitidos.includes(nombreRolUsuario)) {
+            next(); // El usuario tiene permiso, continuar a la siguiente función (el controlador)
         } else {
-            console.log(`[AuthMiddleware] Acceso denegado para rol: ${req.usuario.rol_nombre}`); // Log
-            return res.status(403).json({ message: `Acceso prohibido. Tu rol ('${req.usuario.rol_nombre}') no tiene permiso para acceder a este recurso.` });
+            // El usuario no tiene el rol adecuado
+            return res.status(403).json({ message: `Acceso denegado. Se requiere uno de los siguientes roles: ${rolesPermitidos.join(', ')}` });
         }
-    };
+    } catch (error) {
+        console.error('Error en el middleware de autorización:', error);
+        res.status(500).json({ message: 'Error del servidor al verificar permisos.' });
+    }
+  };
 };
