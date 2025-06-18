@@ -1,5 +1,3 @@
-// Contenido completo para el nuevo archivo: Backend/routes/comprasRoutes.js
-
 const express = require('express');
 const router = express.Router();
 const comprasController = require('../controllers/comprasController');
@@ -21,5 +19,7 @@ router.post(
 );
 
 // Aquí podrías agregar más rutas en el futuro, como obtener un historial de compras.
+
+
 
 module.exports = router;

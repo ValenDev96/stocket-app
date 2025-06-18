@@ -1,0 +1,57 @@
+/* Contenido para el nuevo archivo: Frontend/src/styles/Modals.css */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+}
+
+.modal-dialog {
+  width: 100%;
+  max-width: 600px; /* Ancho por defecto para modales */
+}
+
+.modal-dialog.modal-lg {
+  max-width: 800px; /* Ancho para modales grandes como el historial */
+}
+
+.modal-content {
+  background-color: var(--color-superficie);
+  border-radius: var(--radio-borde);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border: none;
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--color-borde);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-secundario);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--color-borde);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

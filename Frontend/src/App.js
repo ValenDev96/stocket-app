@@ -1,47 +1,90 @@
-// Contenido corregido para: App.js
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-// Aunque Dashboard ya no usa el Context, lo dejamos aquí por si otros componentes lo necesitan.
-import { AuthProvider } from './context/AuthContext'; 
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastContainer } from 'react-toastify';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'react-toastify/dist/ReactToastify.css';
+import './styles/App.css';
+import './styles/Modal.css';
+
+// --- Importación de Componentes ---
+import AppLayout from './components/AppLayout';
 import Login from './components/Login';
-import Inventory from './components/Inventory/GestionMateriasPrimas';
-import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
-import Orders from './components/Orders';
-import Providers from './components/Providers';
+import Inventory from './components/Inventory/GestionMateriasPrimas';
 import GestionProductosTerminados from './components/Productos/GestionProductosTerminados';
-// --- CORRECCIÓN ---
-// Se elimina la importación duplicada de GestionMateriasPrimas, ya se importa como 'Inventory'.
-// import GestionMateriasPrimas from './components/Inventory/GestionMateriasPrimas'; 
-import ProveedorForm from './components/proveedores/ProveedorForm';
+import GestionRecetas from './components/Recetas/GestionRecetas';
+import GestionProduccion from './components/Produccion/GestionProduccion';
+import Orders from './components/Orders';
+import PedidoForm from './components/Pedidos/PedidoForm';
+import PedidoDetalle from './components/Pedidos/PedidoDetalle';
+import Providers from './components/Providers';
 import CompraForm from './components/proveedores/CompraForm';
 import HistorialCompras from './components/proveedores/HistorialCompras';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './styles/App.css';
-import Home from './components/Home';
+import CrearUsuario from './components/Admin/CrearUsuario';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
 
+// --- CORRECCIÓN 1: Importamos el nuevo componente del formulario ---
+import ProveedorForm from './components/proveedores/ProveedorForm';
+
+
+const ROLES = {
+    ADMIN: 'Administrador',
+    PRODUCCION: 'Líder de Producción',
+    BODEGA: 'Líder de Bodega',
+    AUXILIAR: 'Auxiliar Administrativo'
+};
+
+const HomePage = () => {
+    const { usuario, cargando } = useAuth();
+    if (cargando) {
+        return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
+    }
+    return usuario ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+};
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home/>} /> 
-          <Route path="/Login" element={<Login />} />       
-          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/providers" element={<Providers />} />
-          <Route path="/providers/proveedor" element={<ProveedorForm />} />
-          <Route path="/providers/compra" element={<CompraForm />} />
-          <Route path="/providers/historial" element={<HistorialCompras />} />
-          <Route path="/finished-products" element={<GestionProductosTerminados />} />
-          {/* Agrega más rutas según sea necesario */}
+
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            
+            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR]} />}>
+              <Route path="/inventory" element={<Inventory />} />
+              <Route path="/providers" element={<Providers />} />
+              <Route path="/register-purchase" element={<CompraForm />} />
+              <Route path="/providers/historial" element={<HistorialCompras />} />
+              {/* --- CORRECCIÓN 2: Añadimos la nueva ruta que faltaba --- */}
+              <Route path="/providers/proveedor" element={<ProveedorForm />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.PRODUCCION]} />}>
+              <Route path="/finished-products" element={<GestionProductosTerminados />} />
+              <Route path="/recetas/:productoId" element={<GestionRecetas />} />
+              <Route path="/production" element={<GestionProduccion />} />
+            </Route>
+
+            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.PRODUCCION, ROLES.AUXILIAR]} />}>
+                <Route path="/orders" element={<Orders />} />
+                <Route path="/orders/new" element={<PedidoForm />} />
+                <Route path="/orders/:id" element={<PedidoDetalle />} />
+            </Route>
+            
+            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN]} />}>
+              <Route path="/admin/crear-usuario" element={<CrearUsuario />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        <ToastContainer autoClose={3000} hideProgressBar />
       </Router>
     </AuthProvider>
   );

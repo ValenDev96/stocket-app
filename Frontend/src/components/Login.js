@@ -1,104 +1,99 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import axios from 'axios'; // Importamos Axios
-import '../styles/Login.css';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-toastify';
+import '../styles/Login-V2.css';
+import logoImage from '../assets/img/logoEM.jpg';
 
 const Login = () => {
-  const navigate = useNavigate(); 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+    const navigate = useNavigate();
+    const { login } = useAuth();
+    
+    const [formData, setFormData] = useState({
+        email: '',
+        contrasena: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = async (e) => {
-  e.preventDefault();
-  setErrorMessage(''); // Limpiar errores previos
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
-  const loginData = {
-    email: email, // <--- CORREGIDO: Enviar 'email'
-    contrasena: password,
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await login(formData.email, formData.contrasena);
+            toast.success('¡Bienvenido!');
+            navigate('/dashboard');
+        } catch (error) {
+            toast.error(error.message || 'Error al iniciar sesión. Verifique sus credenciales.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-  try {
-    // Asegúrate que el puerto aquí (3000) es donde realmente corre tu backend
-    const response = await axios.post('http://localhost:3000/api/auth/login', loginData);
+    return (
+        // Contenedor principal que centra todo en la página
+        <div className="login-page">
+            <div className="login-card-v2">
+                <div className="logo-container">
+                    <img src={logoImage} alt="Logo Stocket" />
+                </div>
 
-    const { token, usuario } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('usuario', JSON.stringify(usuario));
+                <div className="card-header">
+                    <h2>Bienvenido a Stocket</h2>
+                    <p>Inicia sesión para continuar</p>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="login-form">
+                    <div className="form-group">
+                        <label htmlFor="email">Correo Electrónico</label>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            className="form-control"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
+                            autoComplete="email"
+                            placeholder="ej: juan.perez@correo.com"
+                        />
+                    </div>
+                    <div className="form-group">
+                        <label htmlFor="contrasena">Contraseña</label>
+                        <input
+                            type="password"
+                            id="contrasena"
+                            name="contrasena"
+                            className="form-control"
+                            value={formData.contrasena}
+                            onChange={handleChange}
+                            required
+                            autoComplete="current-password"
+                            placeholder="••••••••"
+                        />
+                    </div>
+                    <button type="submit" className="btn-login" disabled={isSubmitting}>
+                        {isSubmitting ? 'Ingresando...' : 'Ingresar'}
+                    </button>
+                </form>
 
-    if (usuario.rol_id === 1) {
-      navigate('/Dashboard');
-    } else if (usuario.rol_id === 2) {
-      navigate('/Dashboard');
-    } else {
-      navigate('/Dashboard');
-    }
-  } catch (error) {
-    if (error.response) {
-      // El servidor respondió con un estado fuera del rango 2xx
-      setErrorMessage(error.response.data.message || 'Error en el login desde el servidor');
-      console.error('Error data:', error.response.data);
-      console.error('Error status:', error.response.status);
-    } else if (error.request) {
-      // La solicitud se hizo pero no se recibió respuesta
-      setErrorMessage('No se pudo conectar con el servidor. ¿Está encendido?');
-      console.error('Error request:', error.request);
-    } else {
-      // Algo más causó el error
-      setErrorMessage('Ocurrió un error al intentar iniciar sesión.');
-      console.error('Error message:', error.message);
-    }
-  }
-};
-  return (
-    <div className="login-container">
-      <div className="login-card">
-        <img src="/img/Home/logoEM.jpg" alt="Logo Empanadas Emanuel" className="logoEM" />
-        <h2>Iniciar Sesión</h2>
-        <form onSubmit={handleLogin}>
-          <div className="form-group">
-          <label htmlFor="email">Correo Electrónico</label>
-          <input
-            autoFocus
-            autoComplete="email"
-            type="email"
-            id="email"
-            placeholder="Ingresa tu correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            title="Debe ser un correo válido. Ejemplo: usuario@dominio.com"
-          />
-          </div>
+                <div className="card-footer">
+                    <Link to="/forgot-password" className="forgot-password-link">
+                        ¿Olvidaste tu contraseña?
+                    </Link>
+                </div>
+            </div>
 
-
-          <div className="form-group">
-          <label htmlFor="password">Contraseña</label>
-          <input
-            type="password"
-            id="password"
-            placeholder="Ingresa tu contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            pattern=".{6,20}"
-            title="Debe tener entre 6 y 20 caracteres."
-          />
-          </div>
-
-
-          <button type="submit" className="login-button-int">Iniciar Sesión</button>
-        </form>
-
-        {errorMessage && <p className="error-message">{errorMessage}</p>} {/* Mostrar el mensaje de error si existe */}
-
-        <div className="forgot-password">
-          <Link to="/forgot-password" className="link-button">¿Olvidaste tu contraseña?</Link>
+            {/* --- CORRECCIÓN: Footer añadido --- */}
+            <footer className="login-footer">
+                <p>&copy; {new Date().getFullYear()} Stocket. Todos los derechos reservados.</p>
+                <p>Desarrollado por Licet Zambrano, Miguel Guzman & Jhon Gomez.</p>
+            </footer>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Login;

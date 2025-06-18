@@ -17,6 +17,41 @@ exports.obtenerTodos = async (req, res) => {
   }
 };
 
+exports.obtenerPorId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    // 1. Obtener los datos principales del pedido y el cliente
+    const [pedidoRows] = await pool.query(
+      `SELECT p.*, c.nombre as cliente_nombre 
+       FROM pedidos p 
+       JOIN clientes c ON p.cliente_id = c.id 
+       WHERE p.id = ?`,
+      [id]
+    );
+
+    if (pedidoRows.length === 0) {
+      return res.status(404).json({ message: 'Pedido no encontrado.' });
+    }
+    const pedido = pedidoRows[0];
+
+    // 2. Obtener los items (productos) de ese pedido
+    const [itemsRows] = await pool.query(
+      `SELECT ip.*, pt.nombre as producto_nombre 
+       FROM items_pedido ip 
+       JOIN productos_terminados pt ON ip.producto_terminado_id = pt.id 
+       WHERE ip.pedido_id = ?`,
+      [id]
+    );
+    pedido.items = itemsRows;
+
+    res.status(200).json(pedido);
+
+  } catch (error) {
+    console.error("Error al obtener el detalle del pedido:", error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 // Crear un nuevo pedido
 exports.crear = async (req, res) => {
   const connection = await pool.getConnection();

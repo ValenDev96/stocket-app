@@ -26,3 +26,21 @@ export const obtenerLotesPorMateriaPrima = async (materiaPrimaId) => {
   }
   return response.json();
 };
+
+/**
+ * "Elimina" (descarta) un lote específico por su ID.
+ * @param {number} loteId - El ID del lote a descartar.
+ */
+export const descartarLote = async (loteId) => {
+  const endpoint = `${API_URL_BASE}/lotes/${loteId}`;
+  const response = await fetch(endpoint, {
+    method: 'DELETE',
+    headers: createAuthHeaders()
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Error al descartar el lote.' }));
+    throw new Error(errorData.message);
+  }
+  return await response.json();
+};

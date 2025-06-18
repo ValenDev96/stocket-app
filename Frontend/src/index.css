@@ -1,13 +1,41 @@
-body {
+/* 1. Importamos la fuente de Google */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* 2. Definimos las variables de color globales */
+:root {
+  --color-primario: #3498db;
+  --color-primario-dark: #2980b9;
+  --color-secundario: #2c3e50;
+  --color-fondo: #f4f6f9;
+  --color-superficie: #ffffff;
+  --color-texto: #333333;
+  --color-texto-secundario: #7f8c8d;
+  --color-exito: #2ecc71;
+  --color-peligro: #e74c3c;
+  --color-aviso: #f39c12;
+  --color-borde: #e0e0e0;
+  --sombra-caja: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --radio-borde: 8px;
+}
+
+/* --- ESTA ES LA CORRECCIÓN CLAVE --- */
+/* Hacemos que la estructura base ocupe toda la altura disponible */
+html, body, #root {
+  height: 100%;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+}
+
+/* 3. Aplicamos los estilos base al cuerpo de la aplicación */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--color-fondo);
+  color: var(--color-texto);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+/* Es una buena práctica resetear algunos estilos por defecto */
+* {
+  box-sizing: border-box;
 }

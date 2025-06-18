@@ -86,3 +86,19 @@ export const marcarPedidoDevuelto = async (pedidoId, motivo) => {
     }
     return await response.json();
 };
+
+/**
+ * Obtiene los detalles completos de un solo pedido por su ID.
+ * @param {number} pedidoId - El ID del pedido.
+ */
+export const obtenerPedidoPorId = async (pedidoId) => {
+  const endpoint = `${API_URL_BASE}/pedidos/${pedidoId}`;
+  const response = await fetch(endpoint, {
+    headers: createAuthHeaders()
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Error al obtener el detalle del pedido' }));
+    throw new Error(errorData.message);
+  }
+  return await response.json();
+};

@@ -19,18 +19,28 @@ const alertasRoutes = require('./routes/alertasRoutes');
 const lotesRoutes = require('./routes/lotesRoutes');
 const comprasRoutes = require('./routes/comprasRoutes');
 const pedidosRoutes = require('./routes/pedidosRoutes');
+const recetasRoutes = require('./routes/recetasRoutes');
+const produccionRoutes = require('./routes/produccionRoutes');
+const clientesRoutes = require('./routes/clientesRoutes');
+const rolesRoutes = require('./routes/rolesRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 // Agrega aquí cualquier otro archivo de rutas que tengas
 
 // Usar las rutas con sus prefijos de API
 app.use('/api/auth', authRoutes);
-app.use('/api/materiasprimas', materiaPrimaRoutes);
+app.use('/api/materias-primas', materiaPrimaRoutes);
 app.use('/api/productos-terminados', productosTerminadosRoutes);
 app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/movimientos', movimientosInventarioRoutes);
 app.use('/api/alertas', alertasRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/lotes', lotesRoutes);
 app.use('/api/compras', comprasRoutes);
 app.use('/api/pedidos', pedidosRoutes);
+app.use('/api/recetas', recetasRoutes);
+app.use('/api/produccion', produccionRoutes);
+app.use('/api/clientes', clientesRoutes);
+app.use('/api/roles', rolesRoutes); 
 // ...
 
 // Ruta de prueba para verificar que el servidor está vivo

@@ -1,54 +1,52 @@
-// Contenido corregido y mejorado para: Backend/controllers/alertasController.js
+// Contenido 100% completo y corregido para: Backend/controllers/alertasController.js
 
 const pool = require('../config/db');
 
+/**
+ * Obtiene todas las alertas activas del sistema.
+ */
 exports.obtenerAlertasActivas = async (req, res) => {
     try {
-        // Consulta para alertas de STOCK BAJO (sin cambios)
-        const queryStockBajo = `
+        // Alertas de Bajo Stock
+        const bajoStockQuery = `
             SELECT 
-                id,
-                nombre,
-                'STOCK_BAJO' as tipo_alerta,
-                CONCAT('El stock de ', nombre, ' (', stock_actual, ') ha caído por debajo del umbral (', umbral_alerta, ').') as mensaje
-            FROM 
-                materias_primas 
-            WHERE 
-                stock_actual <= umbral_alerta;
+                mp.id as alerta_id,
+                mp.id as materia_prima_id,
+                mp.nombre as nombre_materia_prima,
+                mp.stock_actual,
+                mp.umbral_alerta,
+                'bajo_stock' as tipo_alerta,
+                CONCAT('El stock de ', mp.nombre, ' (', mp.stock_actual, ') ha caído por debajo del umbral (', mp.umbral_alerta, ').') as mensaje_alerta,
+                NOW() as fecha_alerta 
+            FROM materias_primas mp
+            WHERE mp.stock_actual <= mp.umbral_alerta;
         `;
+        const [alertasBajoStock] = await pool.query(bajoStockQuery);
 
-        // --- CORRECCIÓN AQUÍ ---
-        // Se modifica la consulta para agrupar los lotes por nombre y fecha de expiración.
-        const queryProximoAVencer = `
+        // Alertas de Lotes Próximos a Expirar (solo los disponibles)
+        const expiracionQuery = `
             SELECT 
-                materia_prima_nombre as nombre,
-                fecha_expiracion,
-                'PROXIMO_A_VENCER' as tipo_alerta,
-                CONCAT(
-                    COUNT(*), ' lote(s) de ', materia_prima_nombre, 
-                    ' (', SUM(stock_lote), ' en total) vencen el ', 
-                    DATE_FORMAT(fecha_expiracion, '%d-%m-%Y'), '.'
-                ) as mensaje,
-                MIN(id) as id -- Usamos MIN(id) para tener un ID único para la key de React
-            FROM 
-                lotes_materias_primas 
-            WHERE 
-                fecha_expiracion BETWEEN CURDATE() AND CURDATE() + INTERVAL 7 DAY
-            GROUP BY
-                materia_prima_nombre, fecha_expiracion
-            ORDER BY
-                fecha_expiracion ASC;
+                lmp.id as alerta_id,
+                lmp.materia_prima_nombre,
+                lmp.stock_lote,
+                lmp.fecha_expiracion,
+                'expiracion' as tipo_alerta,
+                CONCAT('El lote #', lmp.id, ' de ', lmp.materia_prima_nombre, ' vence el ', DATE_FORMAT(lmp.fecha_expiracion, '%Y-%m-%d'), '.') as mensaje_alerta,
+                lmp.fecha_expiracion as fecha_alerta 
+            FROM lotes_materias_primas lmp
+            WHERE lmp.fecha_expiracion BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+            AND lmp.estado = 'disponible';
         `;
+        const [alertasExpiracion] = await pool.query(expiracionQuery);
 
-        const [alertasStock] = await pool.query(queryStockBajo);
-        const [alertasVencimiento] = await pool.query(queryProximoAVencer);
+        const todasLasAlertas = [...alertasBajoStock, ...alertasExpiracion];
+        
+        todasLasAlertas.sort((a, b) => new Date(a.fecha_alerta) - new Date(b.fecha_alerta));
 
-        const alertasActivas = [...alertasStock, ...alertasVencimiento];
-
-        res.json(alertasActivas);
+        res.status(200).json(todasLasAlertas);
 
     } catch (error) {
         console.error('Error al obtener alertas activas:', error);
-        res.status(500).json({ message: 'Error interno del servidor al obtener las alertas.' });
+        res.status(500).json({ message: 'Error interno del servidor al obtener alertas.' });
     }
 };

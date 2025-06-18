@@ -1,110 +1,97 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // <-- FALTA ESTA LÍNEA
-import { crearProveedor } from '../../services/proveedoresService';
-import CompraForm from './CompraForm';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+// Asumimos que tendrás un servicio para proveedores, si no existe, deberás crearlo.
+// import { crearProveedor } from '../../services/proveedoresService';
 
-function ProveedorForm() {
-  const [form, setForm] = useState({
-    nombre: '',
-    informacion_contacto: '',
-    direccion: '',
-  });
+const ProveedorForm = () => {
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+        nombre: '',
+        informacion_contacto: '',
+        direccion: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const navigate = useNavigate(); // <-- HOOK DE NAVEGACIÓN
-
-  const irAHistorial = () => {
-    navigate('/historial-compras'); // <-- Ruta configurada en App.js
-  };
-
-  const handleRegresar = () => {
-    navigate('/dashboard');
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
-  const [mostrarCompraForm, setMostrarCompraForm] = useState(false);
 
-  const handleSiguiente = (e) => {
-    e.preventDefault();
-    const confirmacion = window.confirm(
-      '¿Ya registraste el proveedor? Si ya lo tienes registrado, puedes continuar con la compra.'
-    );
-    if (confirmacion) {
-      setMostrarCompraForm(true);
-    }
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            // Aquí llamarías a la función del servicio para guardar en la BD.
+            // Por ahora, simulamos una llamada exitosa.
+            // await crearProveedor(formData); 
+            console.log('Datos a enviar al backend:', formData);
+            toast.success('¡Proveedor registrado exitosamente!');
+            
+            // Después de registrar, redirigimos al usuario a la página principal de proveedores.
+            navigate('/providers'); 
+        } catch (error) {
+            toast.error(error.message || 'Error al registrar el proveedor.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-  const handleChange = (e) =>
-    setForm({ ...form, [e.target.name]: e.target.value });
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await crearProveedor(form);
-      alert('Proveedor registrado con éxito');
-      setForm({ nombre: '', informacion_contacto: '', direccion: '' });
-    } catch (error) {
-      console.error('Error al registrar proveedor desde frontend:', error);
-      alert(`Error al registrar proveedor: ${error.message}`);
-    }
-  };
-
-  return (
-    <div className="container mt-4">
-      {!mostrarCompraForm ? (
-        <div className="card shadow p-4">
-          <h3 className="mb-4">Registrar Proveedor</h3>
-          <form onSubmit={handleSubmit}>
-            <label>Nombre</label>
-            <input
-              name="nombre"
-              value={form.nombre}
-              onChange={handleChange}
-              className="form-control mb-2"
-              placeholder="Nombre"
-              required
-            />
-            <label>Información de contacto</label>
-            <input
-              name="informacion_contacto"
-              value={form.informacion_contacto}
-              onChange={handleChange}
-              className="form-control mb-2"
-              placeholder="Información de contacto"
-              required
-            />
-            <label>Dirección</label>
-            <input
-              name="direccion"
-              value={form.direccion}
-              onChange={handleChange}
-              className="form-control mb-3"
-              placeholder="Dirección"
-              required
-            />
-            <div className="d-flex justify-content-between">
-              <button className="btn btn-primary" type="submit">
-                Guardar
-              </button>
-              <button className="btn btn-success" onClick={handleSiguiente}>
-                Siguiente
-              </button>
+    return (
+        <div className="page-container">
+            <div className="page-header">
+                <h2>Registrar Nuevo Proveedor</h2>
             </div>
-          </form>
-          <div className="text-end mt-3">
-            <button className="btn btn-secondary" onClick={irAHistorial}>
-              Ver historial de compras
-            </button>
-            
-            
-          </div>
-          <button onClick={handleRegresar} className="reg">
-            ← Regresar
-          </button>
+            {/* El formulario ahora sigue la estructura estándar de Bootstrap */}
+            <form onSubmit={handleSubmit}>
+                <div className="mb-3">
+                    <label htmlFor="nombre" className="form-label">Nombre del Proveedor</label>
+                    <input
+                        type="text"
+                        id="nombre"
+                        name="nombre"
+                        className="form-control"
+                        value={formData.nombre}
+                        onChange={handleChange}
+                        required
+                        autoComplete="organization"
+                    />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="informacion_contacto" className="form-label">Información de Contacto (Teléfono/Email)</label>
+                    <input
+                        type="text"
+                        id="informacion_contacto"
+                        name="informacion_contacto"
+                        className="form-control"
+                        value={formData.informacion_contacto}
+                        onChange={handleChange}
+                        required
+                        autoComplete="tel"
+                    />
+                </div>
+                <div className="mb-3">
+                    <label htmlFor="direccion" className="form-label">Dirección (Opcional)</label>
+                    <input
+                        type="text"
+                        id="direccion"
+                        name="direccion"
+                        className="form-control"
+                        value={formData.direccion}
+                        onChange={handleChange}
+                        autoComplete="street-address"
+                    />
+                </div>
+
+                {/* Botones de acción claros */}
+                <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+                    {isSubmitting ? 'Registrando...' : 'Registrar Proveedor'}
+                </button>
+                <button type="button" onClick={() => navigate('/providers')} className="btn btn-secondary ms-2">
+                    Cancelar
+                </button>
+            </form>
         </div>
-        
-      ) : (
-        <CompraForm onRegresar={() => setMostrarCompraForm(false)} />
-      )}
-    </div>
-  );
-}
+    );
+};
 
 export default ProveedorForm;

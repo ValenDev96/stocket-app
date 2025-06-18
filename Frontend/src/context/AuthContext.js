@@ -1,26 +1,85 @@
-// Crear este archivo en: src/context/AuthContext.js
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { loginUser } from '../services/authService'; // Asumimos que tienes un servicio para la API
 
-import React, { createContext, useState } from 'react';
-
+// 1. Creamos el contexto
 export const AuthContext = createContext(null);
 
+// 2. Creamos el proveedor
 export const AuthProvider = ({ children }) => {
-  const [usuario, setUsuario] = useState(null); // O inicialízalo desde localStorage
+    const [usuario, setUsuario] = useState(null);
+    // --- NUEVO ESTADO DE CARGA ---
+    // Inicia en true, porque al principio siempre estamos cargando/verificando la sesión.
+    const [cargando, setCargando] = useState(true);
 
-  // Lógica para iniciar sesión, cerrar sesión, etc.
-  const login = (userData) => {
-    setUsuario(userData);
-    // Lógica para guardar en localStorage
-  };
+    // Al iniciar la app, verificamos si hay un token y datos en localStorage
+    useEffect(() => {
+        try {
+            const tokenGuardado = localStorage.getItem('token');
+            const usuarioGuardado = localStorage.getItem('usuario');
 
-  const logout = () => {
-    setUsuario(null);
-    // Lógica para limpiar localStorage
-  };
+            if (tokenGuardado && usuarioGuardado) {
+                // Aquí podrías añadir una llamada para verificar si el token aún es válido contra el backend
+                setUsuario(JSON.parse(usuarioGuardado));
+            }
+        } catch (error) {
+            console.error("Fallo al cargar datos de sesión:", error);
+            // Si falla, limpiamos todo para evitar un estado inconsistente
+            localStorage.removeItem('token');
+            localStorage.removeItem('usuario');
+        } finally {
+            // --- IMPORTANTE ---
+            // Una vez terminada la verificación, ponemos 'cargando' en false.
+            setCargando(false);
+        }
+    }, []);
 
-  return (
-    <AuthContext.Provider value={{ usuario, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    // --- FUNCIÓN LOGIN MEJORADA ---
+    // Ahora esta función llama a la API y actualiza el estado.
+    const login = useCallback(async (email, contrasena) => {
+        try {
+            const data = await loginUser({ email, contrasena }); // Llama al servicio de API
+            const { token, usuario } = data;
+
+            localStorage.setItem('usuario', JSON.stringify(usuario));
+            localStorage.setItem('token', token);
+            setUsuario(usuario);
+            
+            // Retornamos el usuario para que el componente Login pueda usarlo si lo necesita
+            return usuario;
+        } catch (error) {
+            // Si el login falla, nos aseguramos de que no quede basura en el estado
+            logout();
+            // Propagamos el error para que el componente Login pueda mostrar un toast
+            throw error;
+        }
+    }, []);
+
+    // --- FUNCIÓN LOGOUT ---
+    const logout = useCallback(() => {
+        localStorage.removeItem('usuario');
+        localStorage.removeItem('token');
+        setUsuario(null);
+    }, []);
+
+    // Pasamos el nuevo estado 'cargando' en el valor del contexto
+    const value = { usuario, cargando, login, logout };
+
+    return (
+        <AuthContext.Provider value={value}>
+            {/* --- MEJORA ---
+                No renderizamos nada hasta que la carga inicial termine, 
+                así evitamos parpadeos o errores en las rutas protegidas. 
+            */}
+            {!cargando && children}
+        </AuthContext.Provider>
+    );
+};
+
+// 3. Custom Hook para consumir el contexto
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+    }
+    return context;
 };

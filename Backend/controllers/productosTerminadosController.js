@@ -13,6 +13,19 @@ exports.obtenerTodos = async (req, res) => {
   }
 };
 
+exports.obtenerPorId = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [rows] = await pool.query('SELECT * FROM productos_terminados WHERE id = ?', [id]);
+    if (rows.length === 0) {
+      return res.status(404).json({ message: 'Producto terminado no encontrado' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 // Crear un nuevo producto terminado
 exports.crear = async (req, res) => {
   const { nombre, descripcion, precio_venta } = req.body;

@@ -1,17 +1,17 @@
-// Contenido 100% completo y final para: Frontend/src/components/Inventory/GestionMateriasPrimas.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   obtenerTodasMateriasPrimas,
   crearMateriaPrima,
   actualizarMateriaPrima,
-  eliminarMateriaPrima
+  eliminarMateriaPrima,
+  obtenerMovimientosPorMateriaPrima
 } from '../../services/inventarioService';
-import api from '../../services/api';
 import HistorialModal from './HistorialModal';
-import AjusteInventarioModal from './AjusteInventarioModal'; // Importamos el modal de ajuste
+import AjusteInventarioModal from './AjusteInventarioModal';
+import GestionLotesModal from './GestionLoteModal';
+import { toast } from 'react-toastify';
 
-// Componente de Formulario Interno para Crear/Editar (sin cambios)
+// Componente de Formulario Interno (sin cambios)
 const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({
     nombre: '',
@@ -19,6 +19,7 @@ const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
     unidad_medida: 'kg',
     umbral_alerta: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (materia) {
@@ -29,12 +30,7 @@ const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
         umbral_alerta: materia.umbral_alerta || ''
       });
     } else {
-      setFormData({
-        nombre: '',
-        descripcion: '',
-        unidad_medida: 'kg',
-        umbral_alerta: ''
-      });
+      setFormData({ nombre: '', descripcion: '', unidad_medida: 'kg', umbral_alerta: '' });
     }
   }, [materia]);
 
@@ -43,14 +39,22 @@ const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      // El error se maneja en el componente padre
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="card p-4 mb-4">
+    <div className="page-container">
       <h3>{materia ? 'Editar Materia Prima' : 'Agregar Nueva Materia Prima'}</h3>
+      <hr />
       <form onSubmit={handleSubmit}>
         <div className="mb-3">
           <label htmlFor="nombre" className="form-label">Nombre</label>
@@ -76,39 +80,42 @@ const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
             <input type="number" className="form-control" id="umbral_alerta" name="umbral_alerta" value={formData.umbral_alerta} onChange={handleChange} required min="0" />
           </div>
         </div>
-        <button type="submit" className="btn btn-success me-2">Guardar</button>
-        <button type="button" onClick={onCancel} className="btn btn-secondary">Cancelar</button>
+        <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span className="ms-2">Guardando...</span>
+            </>
+          ) : 'Guardar Cambios'}
+        </button>
+        <button type="button" onClick={onCancel} className="btn btn-secondary ms-2">Cancelar</button>
       </form>
     </div>
   );
 };
 
 
-// Componente Principal de Gestión
+// --- Componente Principal de Gestión ---
 const GestionMateriasPrimas = () => {
   const [materiasPrimas, setMateriasPrimas] = useState([]);
   const [materiaPrimaSeleccionada, setMateriaPrimaSeleccionada] = useState(null);
   const [modo, setModo] = useState('lista');
-  const [error, setError] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
 
-  // Estados para el modal de historial
   const [historialVisible, setHistorialVisible] = useState(false);
   const [historialData, setHistorialData] = useState([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(false);
-  
-  // --- NUEVOS ESTADOS PARA EL MODAL DE AJUSTE ---
   const [ajusteModalVisible, setAjusteModalVisible] = useState(false);
+  const [lotesModalVisible, setLotesModalVisible] = useState(false);
 
   const cargarMateriasPrimas = useCallback(async () => {
     try {
       setCargando(true);
       const data = await obtenerTodasMateriasPrimas();
       setMateriasPrimas(data);
-      setError('');
     } catch (err) {
-      setError('No se pudieron cargar las materias primas.');
-      console.error(err);
+      toast.error(err.message || 'No se pudieron cargar las materias primas.');
     } finally {
       setCargando(false);
     }
@@ -122,40 +129,29 @@ const GestionMateriasPrimas = () => {
     try {
       if (modo === 'editar') {
         await actualizarMateriaPrima(materiaPrimaSeleccionada.id, formData);
+        toast.success('¡Materia prima actualizada!');
       } else {
         await crearMateriaPrima(formData);
+        toast.success('¡Materia prima creada!');
       }
       handleCancelar();
       cargarMateriasPrimas();
     } catch (err) {
-      setError(err.message || 'No se pudo guardar la materia prima.');
+      toast.error(err.message || 'No se pudo guardar la materia prima.');
+      throw err;
     }
   };
 
   const handleEliminar = async (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta materia prima?')) {
+    if (window.confirm('¿Estás seguro? La materia prima se eliminará permanentemente si no tiene registros asociados.')) {
       try {
         await eliminarMateriaPrima(id);
+        toast.success('Materia prima eliminada.');
         cargarMateriasPrimas();
       } catch (err) {
-        setError(err.message || 'No se pudo eliminar la materia prima.');
+        toast.error(err.message || 'No se pudo eliminar.');
       }
     }
-  };
-
-  const handleEditar = (materia) => {
-    setMateriaPrimaSeleccionada(materia);
-    setModo('editar');
-  };
-
-  const handleCrear = () => {
-    setMateriaPrimaSeleccionada(null);
-    setModo('crear');
-  };
-
-  const handleCancelar = () => {
-    setModo('lista');
-    setMateriaPrimaSeleccionada(null);
   };
 
   const handleVerHistorial = async (materia) => {
@@ -163,56 +159,67 @@ const GestionMateriasPrimas = () => {
     setHistorialVisible(true);
     setCargandoHistorial(true);
     try {
-      const { data } = await api.get(`/movimientos/${materia.id}`); // <-- ESTA LÍNEA ES EL PROBLEMA
+      const data = await obtenerMovimientosPorMateriaPrima(materia.id);
       setHistorialData(data);
     } catch (err) {
-      setError('No se pudo cargar el historial de movimientos.');
-      console.error(err);
+      toast.error(err.message || 'No se pudo cargar el historial.');
     } finally {
       setCargandoHistorial(false);
     }
-};
-  
-  const handleCerrarHistorial = () => {
-    setHistorialVisible(false);
-    setHistorialData([]);
-    setMateriaPrimaSeleccionada(null);
-  };
-  
-  // --- NUEVAS FUNCIONES PARA MANEJAR EL MODAL DE AJUSTE ---
-  const handleAbrirAjuste = (materia) => {
-    setMateriaPrimaSeleccionada(materia);
-    setAjusteModalVisible(true);
-  };
-
-  const handleCerrarAjuste = () => {
-    setAjusteModalVisible(false);
-    setMateriaPrimaSeleccionada(null);
   };
 
   const handleAjusteExitoso = () => {
     handleCerrarAjuste();
-    cargarMateriasPrimas(); // Recargamos los datos para ver el stock actualizado
+    cargarMateriasPrimas();
+    toast.success('¡Ajuste registrado!');
   };
 
+  const handleCerrarGestionLotes = () => {
+    setLotesModalVisible(false);
+    cargarMateriasPrimas();
+  };
+
+  const handleCrear = () => { setModo('crear'); setMateriaPrimaSeleccionada(null); };
+  const handleEditar = (materia) => { setModo('editar'); setMateriaPrimaSeleccionada(materia); };
+  const handleCancelar = () => { setModo('lista'); setMateriaPrimaSeleccionada(null); };
+  const handleCerrarHistorial = () => setHistorialVisible(false);
+  const handleAbrirAjuste = (materia) => { setMateriaPrimaSeleccionada(materia); setAjusteModalVisible(true); };
+  const handleCerrarAjuste = () => setAjusteModalVisible(false);
+  const handleGestionarLotes = (materia) => { setMateriaPrimaSeleccionada(materia); setLotesModalVisible(true); };
+
+  const materiasFiltradas = materiasPrimas.filter(materia =>
+    materia.nombre.toLowerCase().includes(busqueda.toLowerCase())
+  );
 
   if (cargando) {
-    return <div className="text-center mt-5"><div className="spinner-border" role="status"><span className="visually-hidden">Cargando...</span></div></div>;
+    return <div className="text-center mt-5"><div className="spinner-border text-primary" role="status"></div></div>;
   }
   
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Gestión de Materias Primas</h2>
-
-      {error && <div className="alert alert-danger" role="alert" onClick={() => setError('')}>{error}</div>}
-
+    <div className="page-container">
       {modo === 'lista' ? (
         <>
-          <button onClick={handleCrear} className="btn btn-primary mb-3">
-            <i className="fas fa-plus me-2"></i>Agregar Nueva Materia Prima
-          </button>
+          <div className="page-header">
+            <h2>Gestión de Materias Primas</h2>
+            <button onClick={handleCrear} className="btn btn-primary">
+              <i className="fas fa-plus me-2"></i>Agregar Nueva
+            </button>
+          </div>
+          <div className="mb-3">
+            {/* --- CORRECCIÓN AQUÍ --- */}
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Buscar por nombre..." 
+              value={busqueda} 
+              onChange={(e) => setBusqueda(e.target.value)}
+              id="busquedaMateriaPrima"
+              name="busquedaMateriaPrima"
+              aria-label="Buscar materia prima por nombre"
+            />
+          </div>
           <div className="table-responsive">
-            <table className="table table-striped table-hover">
+            <table className="table table-hover">
               <thead className="table-dark">
                 <tr>
                   <th>ID</th>
@@ -223,54 +230,35 @@ const GestionMateriasPrimas = () => {
                 </tr>
               </thead>
               <tbody>
-                {materiasPrimas.map((materia) => (
-                  <tr key={materia.id}>
-                    <td>{materia.id}</td>
-                    <td>{materia.nombre}</td>
-                    <td>{materia.stock_actual}</td>
-                    <td>{materia.unidad_medida}</td>
-                    <td>
-                      <button onClick={() => handleAbrirAjuste(materia)} className="btn btn-sm btn-success me-2" title="Ajustar Stock">
-                        <i className="fas fa-wrench"></i>
-                      </button>
-                      <button onClick={() => handleVerHistorial(materia)} className="btn btn-sm btn-info me-2" title="Ver Historial">
-                        <i className="fas fa-history"></i>
-                      </button>
-                      <button onClick={() => handleEditar(materia)} className="btn btn-sm btn-warning me-2" title="Editar">
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button onClick={() => handleEliminar(materia.id)} className="btn btn-sm btn-danger" title="Eliminar">
-                        <i className="fas fa-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {materiasFiltradas.length > 0 ? (
+                  materiasFiltradas.map((materia) => (
+                    <tr key={materia.id}>
+                      <td>{materia.id}</td>
+                      <td>{materia.nombre}</td>
+                      <td>{materia.stock_actual}</td>
+                      <td>{materia.unidad_medida}</td>
+                      <td className="acciones-cell">
+                        <button onClick={() => handleGestionarLotes(materia)} className="btn btn-sm btn-accion btn-primary" title="Gestionar Lotes"><i className="fas fa-boxes"></i></button>
+                        <button onClick={() => handleAbrirAjuste(materia)} className="btn btn-sm btn-accion btn-success" title="Ajustar Stock"><i className="fas fa-wrench"></i></button>
+                        <button onClick={() => handleVerHistorial(materia)} className="btn btn-sm btn-accion btn-info" title="Ver Historial"><i className="fas fa-history"></i></button>
+                        <button onClick={() => handleEditar(materia)} className="btn btn-sm btn-accion btn-warning" title="Editar"><i className="fas fa-edit"></i></button>
+                        <button onClick={() => handleEliminar(materia.id)} className="btn btn-sm btn-accion btn-danger" title="Eliminar"><i className="fas fa-trash"></i></button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="5" className="text-center">No se encontraron materias primas.</td></tr>
+                )}
               </tbody>
             </table>
           </div>
         </>
       ) : (
-        <MateriaPrimaForm 
-          materia={materiaPrimaSeleccionada}
-          onSubmit={handleGuardar}
-          onCancel={handleCancelar}
-        />
+        <MateriaPrimaForm materia={materiaPrimaSeleccionada} onSubmit={handleGuardar} onCancel={handleCancelar} />
       )}
-      
-      <HistorialModal 
-        isOpen={historialVisible}
-        onClose={handleCerrarHistorial}
-        historial={historialData}
-        materiaPrimaNombre={materiaPrimaSeleccionada?.nombre}
-        cargando={cargandoHistorial}
-      />
-
-      <AjusteInventarioModal
-        isOpen={ajusteModalVisible}
-        onClose={handleCerrarAjuste}
-        materiaPrima={materiaPrimaSeleccionada}
-        onAjusteExitoso={handleAjusteExitoso}
-      />
+      <HistorialModal isOpen={historialVisible} onClose={handleCerrarHistorial} historial={historialData} materiaPrimaNombre={materiaPrimaSeleccionada?.nombre} cargando={cargandoHistorial}/>
+      <AjusteInventarioModal isOpen={ajusteModalVisible} onClose={handleCerrarAjuste} materiaPrima={materiaPrimaSeleccionada} onAjusteExitoso={handleAjusteExitoso}/>
+      <GestionLotesModal isOpen={lotesModalVisible} onClose={handleCerrarGestionLotes} materiaPrima={materiaPrimaSeleccionada} onLoteDescartado={handleCerrarGestionLotes}/>
     </div>
   );
 };

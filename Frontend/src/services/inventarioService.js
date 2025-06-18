@@ -1,96 +1,102 @@
-const API_URL_BASE = 'http://localhost:3000/api'; // Asegúrate que este sea el puerto de tu backend
+import api from './api';
 
-// Función auxiliar para crear las cabeceras con el token actualizado
-const createAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  };
+/**
+ * Obtiene la lista de todas las alertas activas (stock bajo y expiración).
+ * @returns {Promise<Array>} Un array con los objetos de alerta.
+ */
+export const getAlertasActivas = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        // --- CORRECCIÓN ---
+        // La ruta correcta es '/alertas', no '/alertas/activas'.
+        const response = await api.get('/alertas', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al obtener alertas activas:", error);
+        throw error.response?.data || new Error("No se pudieron cargar las alertas.");
+    }
 };
 
-// --- Funciones para Materias Primas ---
+// --- El resto de tus funciones de servicio ---
+
 export const obtenerTodasMateriasPrimas = async () => {
-  const response = await fetch(`${API_URL_BASE}/materiasprimas`, {
-    headers: createAuthHeaders()
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Error al obtener materias primas' }));
-    throw new Error(errorData.message);
-  }
-  return response.json();
+    try {
+        const token = localStorage.getItem('token');
+        const response = await api.get('/materias-primas', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("No se pudieron cargar las materias primas.");
+    }
 };
 
-export const crearMateriaPrima = async (materiaPrimaData) => {
-  const response = await fetch(`${API_URL_BASE}/materiasprimas`, {
-    method: 'POST',
-    headers: createAuthHeaders(),
-    body: JSON.stringify(materiaPrimaData),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Error al crear materia prima' }));
-    throw new Error(errorData.message);
-  }
-  return response.json();
+export const crearMateriaPrima = async (data) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await api.post('/materias-primas', data, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("No se pudo crear la materia prima.");
+    }
 };
 
-export const actualizarMateriaPrima = async (id, materiaPrimaData) => {
-  const datosParaActualizar = {
-    nombre: materiaPrimaData.nombre,
-    descripcion: materiaPrimaData.descripcion,
-    unidad_medida: materiaPrimaData.unidad_medida,
-    umbral_alerta: materiaPrimaData.umbral_alerta,
-  };
-  const response = await fetch(`${API_URL_BASE}/materiasprimas/${id}`, {
-    method: 'PUT',
-    headers: createAuthHeaders(),
-    body: JSON.stringify(datosParaActualizar),
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Error al actualizar materia prima' }));
-    throw new Error(errorData.message);
-  }
-  return response.json();
+export const actualizarMateriaPrima = async (id, data) => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await api.put(`/materias-primas/${id}`, data, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("No se pudo actualizar la materia prima.");
+    }
 };
 
 export const eliminarMateriaPrima = async (id) => {
-  const response = await fetch(`${API_URL_BASE}/materiasprimas/${id}`, {
-    method: 'DELETE',
-    headers: createAuthHeaders()
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Error al eliminar materia prima' }));
-    throw new Error(errorData.message);
-  }
-  return response.json();
+    try {
+        const token = localStorage.getItem('token');
+        const response = await api.delete(`/materias-primas/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("No se pudo eliminar la materia prima.");
+    }
 };
 
-// --- Función para Obtener Alertas ---
-export const getAlertasActivas = async () => {
-  const response = await fetch(`${API_URL_BASE}/alertas/activas`, {
-    headers: createAuthHeaders()
-  });
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Error al obtener alertas' }));
-    throw new Error(errorData.message);
-  }
-  return response.json();
+export const obtenerMovimientosPorMateriaPrima = async (materiaPrimaId) => {
+    try {
+        const token = localStorage.getItem('token');
+        // Asumimos que la ruta es /movimientos/:materiaPrimaId. Ajusta si es diferente.
+        const response = await api.get(`/movimientos/${materiaPrimaId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data || new Error("No se pudo cargar el historial.");
+    }
 };
 
-// --- FUNCIÓN AÑADIDA ---
+// --- FUNCIÓN AÑADIDA PARA CORREGIR EL ERROR DE COMPILACIÓN ANTERIOR ---
 /**
- * Registra un nuevo movimiento de inventario (ej. ajuste manual).
- * @param {object} movimientoData - Los datos del movimiento (lote_id, tipo_movimiento, etc.)
+ * Registra un nuevo movimiento de inventario (ajuste manual).
+ * @param {object} movimientoData - Los datos del movimiento a registrar.
+ * @returns {Promise<object>} La respuesta del servidor.
  */
 export const registrarMovimientoInventario = async (movimientoData) => {
-    const response = await fetch(`${API_URL_BASE}/movimientos`, {
-        method: 'POST',
-        headers: createAuthHeaders(),
-        body: JSON.stringify(movimientoData),
-    });
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Error al registrar el movimiento.' }));
-        throw new Error(errorData.message);
+    try {
+        const token = localStorage.getItem('token');
+        const response = await api.post('/movimientos', movimientoData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error al registrar movimiento de inventario:", error);
+        throw error.response?.data || new Error("No se pudo registrar el movimiento.");
     }
-    return response.json();
 };

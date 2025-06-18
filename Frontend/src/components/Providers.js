@@ -16,7 +16,7 @@ function Providers() {
           <Link to="/providers/proveedor" className="providers-button blue">
             Registrar Proveedor
           </Link>
-          <Link to="/providers/compra" className="providers-button green">
+          <Link to="/register-purchase" className="providers-button green">
             Registrar Compra
           </Link>
           <Link to="/providers/historial" className="providers-button cyan">

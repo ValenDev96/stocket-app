@@ -1,21 +1,17 @@
-// Contenido corregido y final para: Backend/routes/alertasRoutes.js
-
 const express = require('express');
 const router = express.Router();
-
-// Asegúrate de que el nombre del controlador y la función sean correctos
-const alertasController = require('../controllers/alertasController'); 
+const alertasController = require('../controllers/alertasController');
 const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-const ROLES_PERMITIDOS_VER_ALERTAS = ['Administrador', 'Líder de Bodega', 'Líder de Producción'];
+const ROLES_PERMITIDOS_VER_ALERTAS = ['Administrador', 'Líder de Bodega', 'Líder de Producción', 'Auxiliar Administrativo'];
 
-// Ruta para obtener las alertas activas
+// --- CORRECCIÓN ---
+// La ruta ahora es '/', que se combinará con el prefijo '/api/alertas' en app.js
+// para coincidir con la llamada del frontend.
 router.get(
-    '/activas',
+    '/',
     protegerRuta,
-    // Se usa 'autorizar' que es la función correcta
     autorizar(ROLES_PERMITIDOS_VER_ALERTAS), 
-    // Se usa 'obtenerAlertasActivas' que es la función correcta del controlador
     alertasController.obtenerAlertasActivas 
 );
 
