@@ -1,47 +1,59 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { ToastContainer } from 'react-toastify';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'react-toastify/dist/ReactToastify.css';
-import './styles/App.css';
-import './styles/Modal.css';
+import React from "react";
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ToastContainer } from "react-toastify";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "react-toastify/dist/ReactToastify.css";
+import "./styles/App.css";
+import "./styles/Modal.css";
 
 // --- Importación de Componentes ---
-import AppLayout from './components/AppLayout';
-import Login from './components/Login';
-import ForgotPassword from './components/ForgotPassword';
-import Dashboard from './components/Dashboard';
-import Inventory from './components/Inventory/GestionMateriasPrimas';
-import GestionProductosTerminados from './components/Productos/GestionProductosTerminados';
-import GestionRecetas from './components/Recetas/GestionRecetas';
-import GestionProduccion from './components/Produccion/GestionProduccion';
-import Orders from './components/Orders';
-import PedidoForm from './components/Pedidos/PedidoForm';
-import PedidoDetalle from './components/Pedidos/PedidoDetalle';
-import Providers from './components/Providers';
-import CompraForm from './components/proveedores/CompraForm';
-import HistorialCompras from './components/proveedores/HistorialCompras';
-import CrearUsuario from './components/Admin/CrearUsuario';
-import ProtectedRoute from './components/Auth/ProtectedRoute';
-
-// --- CORRECCIÓN 1: Importamos el nuevo componente del formulario ---
-import ProveedorForm from './components/proveedores/ProveedorForm';
-
+import AppLayout from "./components/AppLayout";
+import Login from "./components/Login";
+import ForgotPassword from "./components/ForgotPassword";
+import Dashboard from "./components/Dashboard";
+import Inventory from "./components/Inventory/GestionMateriasPrimas";
+import GestionProductosTerminados from "./components/Productos/GestionProductosTerminados";
+import GestionRecetas from "./components/Recetas/GestionRecetas";
+import GestionProduccion from "./components/Produccion/GestionProduccion";
+import Orders from "./components/Orders";
+import PedidoForm from "./components/Pedidos/PedidoForm";
+import PedidoDetalle from "./components/Pedidos/PedidoDetalle";
+import Providers from "./components/Providers";
+import CompraForm from "./components/proveedores/CompraForm";
+import HistorialCompras from "./components/proveedores/HistorialCompras";
+import CrearUsuario from "./components/Admin/CrearUsuario";
+import ClientesCrud from "./components/clientes/ClientesCrud";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import ProveedorForm from "./components/proveedores/ProveedorForm";
+import HorasTrabajadas from "./components/HorasTrabajadas/HorasTrabajadas";
 
 const ROLES = {
-    ADMIN: 'Administrador',
-    PRODUCCION: 'Líder de Producción',
-    BODEGA: 'Líder de Bodega',
-    AUXILIAR: 'Auxiliar Administrativo'
+  ADMIN: "Administrador",
+  PRODUCCION: "Líder de Producción",
+  BODEGA: "Líder de Bodega",
+  AUXILIAR: "Auxiliar Administrativo",
 };
 
 const HomePage = () => {
-    const { usuario, cargando } = useAuth();
-    if (cargando) {
-        return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
-    }
-    return usuario ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />;
+  const { usuario, cargando } = useAuth();
+  if (cargando) {
+    return (
+      <div className="text-center mt-5">
+        <div className="spinner-border text-primary"></div>
+      </div>
+    );
+  }
+  return usuario ? (
+    <Navigate to="/dashboard" replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
 };
 
 function App() {
@@ -55,28 +67,72 @@ function App() {
 
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            
-            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR]} />}>
+
+            {/* ✅ Horas de Trabajo - Accesible para TODOS los roles autenticados */}
+            <Route
+              element={
+                <ProtectedRoute
+                  rolesPermitidos={[
+                    ROLES.ADMIN,
+                    ROLES.PRODUCCION,
+                    ROLES.BODEGA,
+                    ROLES.AUXILIAR,
+                  ]}
+                />
+              }
+            >
+              <Route path="/horas-trabajadas" element={<HorasTrabajadas />} />
+            </Route>
+
+            <Route
+              element={
+                <ProtectedRoute
+                  rolesPermitidos={[ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR]}
+                />
+              }
+            >
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/providers" element={<Providers />} />
               <Route path="/register-purchase" element={<CompraForm />} />
-              <Route path="/providers/historial" element={<HistorialCompras />} />
-              {/* --- CORRECCIÓN 2: Añadimos la nueva ruta que faltaba --- */}
+              <Route
+                path="/providers/historial"
+                element={<HistorialCompras />}
+              />
               <Route path="/providers/proveedor" element={<ProveedorForm />} />
+              <Route path="/clientes" element={<ClientesCrud />} />
             </Route>
-            
-            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.PRODUCCION]} />}>
-              <Route path="/finished-products" element={<GestionProductosTerminados />} />
+
+            <Route
+              element={
+                <ProtectedRoute
+                  rolesPermitidos={[ROLES.ADMIN, ROLES.PRODUCCION]}
+                />
+              }
+            >
+              <Route
+                path="/finished-products"
+                element={<GestionProductosTerminados />}
+              />
               <Route path="/recetas/:productoId" element={<GestionRecetas />} />
               <Route path="/production" element={<GestionProduccion />} />
             </Route>
 
-            <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN, ROLES.PRODUCCION, ROLES.AUXILIAR]} />}>
-                <Route path="/orders" element={<Orders />} />
-                <Route path="/orders/new" element={<PedidoForm />} />
-                <Route path="/orders/:id" element={<PedidoDetalle />} />
+            <Route
+              element={
+                <ProtectedRoute
+                  rolesPermitidos={[
+                    ROLES.ADMIN,
+                    ROLES.PRODUCCION,
+                    ROLES.AUXILIAR,
+                  ]}
+                />
+              }
+            >
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/orders/new" element={<PedidoForm />} />
+              <Route path="/orders/:id" element={<PedidoDetalle />} />
             </Route>
-            
+
             <Route element={<ProtectedRoute rolesPermitidos={[ROLES.ADMIN]} />}>
               <Route path="/admin/crear-usuario" element={<CrearUsuario />} />
             </Route>

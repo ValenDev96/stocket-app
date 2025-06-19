@@ -1,15 +1,36 @@
-import api from './api'; // Asume que tienes api.js para la URL base y token
-
-// Función auxiliar para crear las cabeceras con el token
-const createAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return { 'Authorization': `Bearer ${token}` };
-};
+import axios from 'axios';
+const API_URL = 'http://localhost:3000/api/clientes'; // ajusta según tu ruta real
 
 export const obtenerClientes = async () => {
-    const response = await fetch(`${api.defaults.baseURL}/clientes`, {
-        headers: createAuthHeaders()
-    });
-    if (!response.ok) throw new Error('Error al obtener clientes');
-    return await response.json();
+  const token = localStorage.getItem('token');
+  const res = await axios.get(API_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  return res.data;
+};
+
+
+export const crearCliente = async (cliente) => {
+  const token = localStorage.getItem('token');
+  const res = await axios.post(API_URL, cliente, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const actualizarCliente = async (id, cliente) => {
+  const token = localStorage.getItem('token');
+  const res = await axios.put(`${API_URL}/${id}`, cliente, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const eliminarCliente = async (id) => {
+  const token = localStorage.getItem('token');
+  await axios.delete(`${API_URL}/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 };

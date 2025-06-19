@@ -22,6 +22,7 @@ const Sidebar = () => {
     const puedeVerInventarioYProveedores = [ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR].includes(usuario.rol_nombre);
     const puedeVerProduccionYProductos = [ROLES.ADMIN, ROLES.PRODUCCION].includes(usuario.rol_nombre);
     const puedeVerPedidos = [ROLES.ADMIN, ROLES.PRODUCCION, ROLES.AUXILIAR].includes(usuario.rol_nombre);
+    const puedeVerHorasTrabajadas = [ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR].includes(usuario.rol_nombre); // Nueva línea
     const esAdmin = usuario.rol_nombre === ROLES.ADMIN;
 
     const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
@@ -72,10 +73,25 @@ const Sidebar = () => {
                     </>
                 )}
 
+                {/* ✅ Nuevo enlace para Horas de Trabajo */}
+                {puedeVerHorasTrabajadas && (
+                    <NavLink to="/horas-trabajadas" className="nav-link">
+                        <i className="fas fa-clock"></i>
+                        <span>Horas de Trabajo</span>
+                    </NavLink>
+                )}
+
                 {puedeVerPedidos && (
                     <NavLink to="/orders" className="nav-link">
                         <i className="fas fa-clipboard-list"></i>
                         <span>Pedidos</span>
+                    </NavLink>
+                )}
+                 {/* ✅ Enlace para el módulo Clientes */}
+                {(usuario.rol_nombre === ROLES.ADMIN || usuario.rol_nombre === ROLES.AUXILIAR) && (
+                    <NavLink to="/clientes" className="nav-link">
+                        <i className="fas fa-users"></i>
+                        <span>Clientes</span>
                     </NavLink>
                 )}
 

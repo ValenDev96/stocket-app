@@ -23,6 +23,7 @@ const recetasRoutes = require('./routes/recetasRoutes');
 const produccionRoutes = require('./routes/produccionRoutes');
 const clientesRoutes = require('./routes/clientesRoutes');
 const rolesRoutes = require('./routes/rolesRoutes');
+const horasTrabajadasRoutes = require('./routes/horasTrabajadasRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 // Agrega aquí cualquier otro archivo de rutas que tengas
 
@@ -40,6 +41,7 @@ app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/recetas', recetasRoutes);
 app.use('/api/produccion', produccionRoutes);
 app.use('/api/clientes', clientesRoutes);
+app.use('/api/horas-trabajadas', horasTrabajadasRoutes);
 app.use('/api/roles', rolesRoutes); 
 // ...
 
