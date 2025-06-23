@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+const crypto = require('crypto');
+const { sendEmail } = require('../utils/emailHelper');
 
 // --- La función de registro se mantiene igual ---
 exports.register = async (req, res) => {
@@ -98,5 +100,85 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.error('Error en el login:', error);
         res.status(500).json({ message: 'Error al iniciar sesión' });
+    }
+};
+
+// @desc    Maneja la petición de "Olvidé mi contraseña"
+// @route   POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE email = ? AND activo = 1', [email]);
+        if (users.length === 0) {
+            // Nota de seguridad: No revelamos si el email existe o no.
+            return res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' });
+        }
+        const user = users[0];
+
+        // Generar un token de reseteo
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        
+        // El token expira en 10 minutos
+        const tokenExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Guardar el token hasheado y la fecha de expiración en la base de datos
+        await pool.query(
+            'UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
+            [hashedToken, tokenExpires, user.id]
+        );
+
+        // Crear la URL de reseteo (asegúrate que el frontend corre en el puerto 3001)
+        const resetUrl = `http://localhost:3001/reset-password/${resetToken}`;
+        
+        // Enviar el correo
+        await sendEmail({
+            to: user.email,
+            subject: 'Restablecimiento de Contraseña - Stocket App',
+            html: `<p>Has solicitado restablecer tu contraseña. Por favor, haz clic en el siguiente enlace (válido por 10 minutos) para continuar:</p>
+                   <a href="${resetUrl}">${resetUrl}</a>`
+        });
+
+        res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error en el servidor.' });
+    }
+};
+
+
+exports.resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    try {
+        const [users] = await pool.query(
+            'SELECT * FROM usuarios WHERE reset_token = ? AND reset_token_expires > NOW()',
+            [hashedToken]
+        );
+
+        if (users.length === 0) {
+            return res.status(400).json({ message: 'El token es inválido o ha expirado.' });
+        }
+        const user = users[0];
+
+        // Encriptar la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Actualizar la contraseña y limpiar los campos de reseteo
+        await pool.query(
+            'UPDATE usuarios SET contrasena = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
+            [hashedPassword, user.id]
+        );
+
+        res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error en el servidor.' });
     }
 };

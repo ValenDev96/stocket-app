@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const { convertirUnidad } = require('../utils/conversionHelper');
 
 // Obtener la receta, incluyendo la unidad de medida de cada ingrediente
 exports.obtenerRecetaPorProductoId = async (req, res) => {
@@ -28,22 +29,64 @@ exports.guardarReceta = async (req, res) => {
 
     try {
         await connection.beginTransaction();
+
+        let costoTotalEstimado = 0;
+
+        if (ingredientes && ingredientes.length > 0) {
+            // --- PASO 1: OBTENER PRECIOS DE LAS MATERIAS PRIMAS ---
+            // Creamos una lista de IDs de las materias primas que necesitamos consultar
+            const materiaPrimaIds = ingredientes.map(ing => ing.materia_prima_id);
+            
+            // Obtenemos el precio unitario más reciente de cada materia prima desde la tabla de compras
+            const [preciosRows] = await connection.query(`
+                SELECT 
+                    materia_prima_nombre, 
+                    precio_unitario, 
+                    (SELECT unidad_medida FROM materias_primas WHERE nombre = cp.materia_prima_nombre) as unidad_compra
+                FROM compras_proveedores cp
+                WHERE (materia_prima_nombre, fecha_compra) IN (
+                    SELECT materia_prima_nombre, MAX(fecha_compra)
+                    FROM compras_proveedores
+                    WHERE materia_prima_nombre IN (SELECT nombre FROM materias_primas WHERE id IN (?))
+                    GROUP BY materia_prima_nombre
+                )
+            `, [materiaPrimaIds]);
+
+            const preciosMap = new Map(preciosRows.map(p => [p.materia_prima_nombre, { precio: p.precio_unitario, unidad: p.unidad_compra }]));
+            const materiasPrimasMap = new Map((await connection.query('SELECT id, nombre FROM materias_primas'))[0].map(mp => [mp.id, mp.nombre]));
+
+
+            // --- PASO 2: CALCULAR EL COSTO TOTAL DE LA RECETA ---
+            for (const ing of ingredientes) {
+                const nombreMateriaPrima = materiasPrimasMap.get(parseInt(ing.materia_prima_id));
+                const infoPrecio = preciosMap.get(nombreMateriaPrima);
+
+                if (infoPrecio) {
+                    // Convertimos la cantidad de la receta a la unidad en que se compró la materia prima
+                    const cantidadConvertida = convertirUnidad(ing.cantidad, ing.unidad_medida, infoPrecio.unidad);
+                    costoTotalEstimado += cantidadConvertida * infoPrecio.precio;
+                }
+            }
+        }
+        
+        // --- PASO 3: GUARDAR LA RECETA CON EL COSTO CALCULADO ---
         let [recetaExistente] = await connection.query('SELECT id FROM recetas WHERE producto_terminado_id = ?', [producto_terminado_id]);
         let recetaId;
 
         if (recetaExistente.length > 0) {
             recetaId = recetaExistente[0].id;
-            await connection.query('UPDATE recetas SET nombre_receta = ?, descripcion = ? WHERE id = ?', [nombre_receta, descripcion, recetaId]);
+            // Actualizamos la receta incluyendo el costo_estimado
+            await connection.query('UPDATE recetas SET nombre_receta = ?, descripcion = ?, costo_estimado = ? WHERE id = ?', [nombre_receta, descripcion, costoTotalEstimado, recetaId]);
         } else {
-            const [result] = await connection.query('INSERT INTO recetas (producto_terminado_id, nombre_receta, descripcion) VALUES (?, ?, ?)', [producto_terminado_id, nombre_receta, descripcion]);
+            // Insertamos la nueva receta incluyendo el costo_estimado
+            const [result] = await connection.query('INSERT INTO recetas (producto_terminado_id, nombre_receta, descripcion, costo_estimado) VALUES (?, ?, ?, ?)', [producto_terminado_id, nombre_receta, descripcion, costoTotalEstimado]);
             recetaId = result.insertId;
         }
 
+        // El resto de la lógica para los ingredientes se mantiene igual
         await connection.query('DELETE FROM ingredientes_receta WHERE receta_id = ?', [recetaId]);
 
         if (ingredientes && ingredientes.length > 0) {
-            // --- CORRECCIÓN ---
-            // Los valores a insertar ahora incluyen 'unidad_medida'
             const ingredientesValues = ingredientes.map(ing => [recetaId, ing.materia_prima_id, ing.cantidad, ing.unidad_medida]);
             await connection.query(
                 'INSERT INTO ingredientes_receta (receta_id, materia_prima_id, cantidad, unidad_medida) VALUES ?', 

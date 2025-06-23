@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { formatCurrency, formatQuantity } from '../../utils/formatters';
 
 // --- CORRECCIÓN ---
 // Se importa desde el nuevo servicio dedicado en lugar de usar 'api' directamente.
@@ -147,7 +148,7 @@ const GestionProductosTerminados = () => {
       {modo === 'lista' ? (
         <>
           <div className="page-header">
-            <h2>Gestión de Productos Terminados</h2>
+            <h2>Gestión de productos terminados</h2>
             <button onClick={handleCrear} className="btn btn-primary"><i className="fas fa-plus me-2"></i>Agregar Nuevo</button>
           </div>
           <div className="table-responsive">
@@ -166,8 +167,8 @@ const GestionProductosTerminados = () => {
                   <tr key={prod.id}>
                     <td>{prod.id}</td>
                     <td>{prod.nombre}</td>
-                    <td>${parseFloat(prod.precio_venta).toFixed(2)}</td>
-                    <td>{prod.stock}</td>
+                    <td>{formatCurrency(prod.precio_venta)}</td>
+                    <td>{formatQuantity(prod.stock)}</td>
                     <td className="acciones-cell">
                       <button onClick={() => handleEditar(prod)} className="btn btn-sm btn-accion btn-warning" title="Editar Producto"><i className="fas fa-edit"></i></button>
                       <Link to={`/recetas/${prod.id}`} className="btn btn-sm btn-accion btn-info" title="Editar Receta">

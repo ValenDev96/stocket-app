@@ -1,102 +1,252 @@
-/* Nueva clase para centrar el contenedor */
-.providers-center-container {
+/* ================================================================== */
+/* == ESTILOS PARA LA PÁGINA PRINCIPAL DE PROVEEDORES (Providers.js) == */
+/* ================================================================== */
+
+/* Contenedor que centra la tarjeta principal en la página */
+.providers-page-container {
   display: flex;
   justify-content: center;
-  align-items: center;
-  min-height: 80vh;
+  align-items: flex-start; /* Alinea arriba para que no se estire */
+  padding: 2rem;
+  background-color: #f4f7f9; /* Un fondo gris muy sutil */
+  min-height: 90vh;
 }
 
-/* Card ajustada */
-.providers-card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 32px 40px;
+/* Tarjeta principal que contiene todo el módulo */
+.providers-main-card {
   width: 100%;
-  max-width: 500px;
+  max-width: 800px; /* Ancho máximo para la tarjeta */
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.07);
+  padding: 2.5rem;
+  text-align: center;
 }
 
-/* Botones verticales y centrados */
-.providers-button-group {
+/* Encabezado del módulo */
+.providers-header h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+}
+
+.providers-header p {
+  color: #7f8c8d;
+  margin-bottom: 2rem;
+}
+
+/* Contenedor para las tarjetas de estadísticas */
+.stats-container {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Estilo para las tarjetas de estadísticas */
+.stat-card {
+  flex-basis: 250px;
+  padding: 1.5rem;
+  border-radius: 10px;
+  background-color: #f8f9fa;
+  border-left: 4px solid #3498db; /* Acento de color */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card .stat-number {
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #3498db;
+}
+
+/* Variante de color para la segunda tarjeta */
+.stat-card:last-child {
+  border-left-color: #2ecc71;
+}
+
+.stat-card .stat-number-alt {
+  color: #2ecc71;
+  display: block;
+  font-size: 2.2rem;
+  font-weight: 700;
+}
+
+.stat-card .stat-label {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* Contenedor para los botones de acción */
+.action-buttons-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2 columnas */
+  gap: 1rem;
+}
+
+/* Estilo base de los botones de acción */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; /* Espacio entre icono y texto */
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Colores específicos para cada botón */
+.action-btn.primary { background-color: #3498db; }
+.action-btn.success { background-color: #2ecc71; }
+.action-btn.secondary { background-color: #95a5a6; }
+.action-btn.info { background-color: #34495e; }
+
+
+/* ========================================================================= */
+/* == ESTILOS PARA LA TABLA DE GESTIÓN DE PROVEEDORES (GestionProveedores.js) == */
+/* ========================================================================= */
+
+.gestion-proveedores-page {
+  padding: 2rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+}
+
+.page-header-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.page-header-modern h2 {
+  font-weight: 700;
+  color: #2c3e50;
+}
+
+/* Estilo para la tabla */
+.table-modern thead th {
+  background-color: #212529;
+  color: white;
+  font-weight: 500;
+}
+
+.table-modern td, .table-modern th {
+  vertical-align: middle;
+  text-align: left;
+  padding: 12px;
+}
+
+/* Botones de acción circulares para la tabla */
+.circular-icon-button {
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  transition: opacity 0.2s ease;
+}
+
+.circular-icon-button:hover {
+  opacity: 0.85;
+}
+
+/* Colores de los botones de la tabla */
+.circular-icon-button.yellow { background-color: #f59e0b; }
+.circular-icon-button.red    { background-color: #ef4444; }
+.circular-icon-button.green  { background-color: #22c55e; }
+
+/* ========================================================================= */
+/* ==        ESTILOS PARA LA TARJETA DE FILTROS (Módulo Pagos)        == */
+/* ========================================================================= */
+
+.filter-card {
+  background-color: #ffffff;
+  padding: 1.5rem 2rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  border: 1px solid #e5e7eb;
+}
+
+.filter-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Diseño responsive */
+  gap: 1.5rem;
+  align-items: flex-end; /* Alinea los elementos en la parte inferior */
+}
+
+.filter-item {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  align-items: center;
 }
 
-.providers-button {
-  width: 180px;
-  padding: 10px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: center;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background 0.3s ease;
+.filter-item label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.5rem;
 }
 
-/* Colores específicos */
-.providers-button.blue {
-  background-color: #1d6ce2;
-  color: white;
-}
-.providers-button.blue:hover {
-  background-color: #1558b0;
-}
-
-.providers-button.green {
-  background-color: #229954;
-  color: white;
-}
-.providers-button.green:hover {
-  background-color: #1a7e44;
-}
-
-.providers-button.cyan {
-  background-color: #00bcd4;
-  color: white;
-}
-.providers-button.cyan:hover {
-  background-color: #0097a7;
-}
-/* Centrado de contenedor */
-.providers-center-container {
+/* Contenedor para el input de fecha y el icono */
+.date-input-container {
+  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
-  min-height: 80vh;
-  padding: 16px;
 }
 
-/* Card más ancha */
-.providers-card {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  padding: 32px 40px;
-  width: 100%;
-  max-width: 700px; /* Aumentado para mayor ancho */
+.date-input-container .form-control {
+  padding-right: 2.5rem; /* Espacio para el icono */
 }
 
-/* Título centrado */
-.providers-title {
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 24px;
-  color: #2c3e50;
-  text-align: center;
-}
-.reg {
-  dwidth: 180px;
-  padding: 10px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  text-align: center;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background 0.3s ease
+.date-input-container .date-icon {
+  position: absolute;
+  right: 1rem;
+  color: #888;
+  pointer-events: none; /* Para que se pueda hacer clic en el input */
 }
 
-.btn-regresar:hover {
-  background-color: #363838;
+/* Estilo para el botón dentro de la grilla de filtros */
+.filter-item-button {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.filter-item-button .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Estilo para los botones en el encabezado de la página */
+.header-buttons {
+    display: flex;
+    gap: 0.75rem;
 }

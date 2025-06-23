@@ -25,10 +25,16 @@ const clientesRoutes = require('./routes/clientesRoutes');
 const rolesRoutes = require('./routes/rolesRoutes');
 const horasTrabajadasRoutes = require('./routes/horasTrabajadasRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const pagosRoutes = require('./routes/pagosRoutes');
+const reportesRoutes = require('./routes/reportesRoutes');
+const usuariosRoutes = require('./routes/usuariosRoutes')
+const auditoriaRoutes = require('./routes/auditoriaRoutes');
 // Agrega aquí cualquier otro archivo de rutas que tengas
 
 // Usar las rutas con sus prefijos de API
 app.use('/api/auth', authRoutes);
+app.use('/api/usuarios', usuariosRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/materias-primas', materiaPrimaRoutes);
 app.use('/api/productos-terminados', productosTerminadosRoutes);
 app.use('/api/proveedores', proveedoresRoutes);
@@ -43,6 +49,10 @@ app.use('/api/produccion', produccionRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/horas-trabajadas', horasTrabajadasRoutes);
 app.use('/api/roles', rolesRoutes); 
+app.use('/api/pagos', pagosRoutes);
+app.use('/api/reportes', reportesRoutes);
+app.use('/api/compras', require('./routes/comprasRoutes'));
+
 // ...
 
 // Ruta de prueba para verificar que el servidor está vivo

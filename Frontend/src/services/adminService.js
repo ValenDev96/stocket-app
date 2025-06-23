@@ -38,3 +38,25 @@ export const registerUser = async (userData) => {
         throw error.response?.data || new Error("No se pudo registrar el usuario.");
     }
 };
+
+export const getUsers = async () => {
+  const response = await api.get('/usuarios');
+  return response.data;
+};
+
+export const updateUser = async (id, userData) => {
+  const response = await api.put(`/usuarios/${id}`, userData);
+  return response.data;
+};
+
+export const deleteUser = async (id) => {
+  const response = await api.delete(`/usuarios/${id}`);
+  return response.data;
+};
+
+export const getAuditoriaLogs = async (filters) => {
+    // Construimos los parámetros de consulta a partir del objeto de filtros
+    const params = new URLSearchParams(filters).toString();
+    const response = await api.get(`/auditoria?${params}`);
+    return response.data;
+};

@@ -65,7 +65,7 @@ const CompraForm = () => {
   return (
     <div className="container mt-4">
       <div className="card p-4">
-        <h2>Registrar Nueva Compra de Materia Prima</h2>
+        <h2 className="titulo-principal">Registrar nueva compra de materia prima</h2>
         <p>Al registrar una compra, se creará un nuevo lote y se actualizará el stock.</p>
         <hr />
         {mensaje.texto && (

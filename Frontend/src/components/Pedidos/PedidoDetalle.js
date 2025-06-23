@@ -1,9 +1,8 @@
-// Contenido completo para: Frontend/src/components/Pedidos/PedidoDetalle.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { obtenerPedidoPorId } from '../../services/pedidosService';
 import { toast } from 'react-toastify';
+import { formatCurrency } from '../../utils/formatters';
 
 const PedidoDetalle = () => {
   const { id } = useParams(); // Obtiene el ID del pedido desde la URL
@@ -55,7 +54,7 @@ const PedidoDetalle = () => {
           <p><strong>Fecha del Pedido:</strong> {new Date(pedido.fecha_pedido).toLocaleDateString()}</p>
           <p><strong>Fecha de Entrega Estimada:</strong> {new Date(pedido.fecha_entrega_estimada).toLocaleDateString()}</p>
           <p><strong>Estado:</strong> <span className={`badge bg-${pedido.estado_pedido === 'completado' ? 'success' : 'warning'}`}>{pedido.estado_pedido}</span></p>
-          <p><strong>Total del Pedido:</strong> ${parseFloat(pedido.total_pedido).toFixed(2)}</p>
+          <p><strong>Total del Pedido:</strong> {formatCurrency(pedido.total_pedido)}</p>
         </div>
       </div>
 
@@ -77,8 +76,8 @@ const PedidoDetalle = () => {
               <tr key={item.id}>
                 <td>{item.producto_nombre}</td>
                 <td>{item.cantidad}</td>
-                <td>${parseFloat(item.precio_unitario).toFixed(2)}</td>
-                <td>${(item.cantidad * item.precio_unitario).toFixed(2)}</td>
+                <td>{formatCurrency(item.precio_unitario)}</td>
+                <td>{formatCurrency(item.cantidad * item.precio_unitario)}</td>             
               </tr>
             ))}
           </tbody>

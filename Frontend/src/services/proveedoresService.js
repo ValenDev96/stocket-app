@@ -1,78 +1,59 @@
+import api from './api'; // Asegúrate que esta sea tu instancia de Axios
 
-const API_URL = 'http://localhost:3000/api/proveedores';
-
-// --- Función Auxiliar para manejar las peticiones a la API ---
-// Esta función centraliza la lógica de autenticación y manejo de errores.
-async function apiFetch(endpoint, method = 'GET', body = null) {
-  const token = localStorage.getItem('token');
-  const headers = {
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json',
-  };
-
-  const config = {
-    method: method,
-    headers: headers,
-  };
-
-  if (body) {
-    config.body = JSON.stringify(body);
-  }
-
-  const response = await fetch(endpoint, config);
-
-  // Manejo de errores mejorado: Intenta leer el mensaje de error del backend.
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: `Error en la petición: ${response.statusText}` }));
-    throw new Error(errorData.message || 'Ocurrió un error desconocido.');
-  }
-
-  // Si la respuesta no tiene contenido (ej. en un DELETE), no intenta parsear JSON.
-  if (response.status === 204) {
-    return null;
-  }
-
-  return await response.json();
-}
-
-
-// --- Las funciones de servicio ahora son más simples y limpias ---
-
-/**
- * Obtiene la lista de todos los proveedores.
- */
-export const obtenerProveedores = () => {
-  return apiFetch(API_URL);
+// 🔵 Obtener todos los proveedores (activos o inactivos)
+export const obtenerProveedores = async () => {
+  const { data } = await api.get('/proveedores');
+  return data;
 };
 
-/**
- * Crea un nuevo proveedor.
- * @param {object} nuevoProveedor - Datos del proveedor a crear.
- */
-export const crearProveedor = (nuevoProveedor) => {
-  return apiFetch(API_URL, 'POST', nuevoProveedor);
+// 🟢 Crear un nuevo proveedor
+export const crearProveedor = async (proveedorData) => {
+  const { data } = await api.post('/proveedores', proveedorData);
+  return data;
 };
 
-/**
- * Registra una nueva compra y su lote asociado.
- * @param {object} compraData - Datos de la compra.
- */
-export const registrarCompra = (compraData) => {
-  return apiFetch(`${API_URL}/compras`, 'POST', compraData);
+// 🟡 Obtener proveedor por ID (para editar)
+export const getProveedorById = async (id) => {
+  const { data } = await api.get(`/proveedores/${id}`);
+  return data;
 };
 
-/**
- * Obtiene el historial de todas las compras registradas.
- */
-export const obtenerHistorialCompras = () => {
-  return apiFetch(`${API_URL}/compras`);
+// 🟠 Actualizar proveedor existente
+export const actualizarProveedor = async (id, proveedorData) => {
+  const { data } = await api.put(`/proveedores/${id}`, proveedorData);
+  return data;
 };
 
-/**
- * Compara precios de un producto entre diferentes proveedores.
- * @param {string} nombreProducto - El nombre de la materia prima a comparar.
- */
-export const compararPrecios = (nombreProducto) => {
-  const endpoint = `${API_URL}/comparar-precios?producto=${encodeURIComponent(nombreProducto)}`;
-  return apiFetch(endpoint);
+export const inactivarProveedor = async (id) => {
+  const { data } = await api.put(`/proveedores/${id}/inactivar`);
+  return data;
+};
+
+export const activarProveedor = async (id) => {
+  const { data } = await api.put(`/proveedores/${id}/activar`);
+  return data;
+};
+
+// 🔴 Eliminar proveedor (inactivar - DELETE soft)
+export const eliminarProveedor = async (id) => {
+  const { data } = await api.delete(`/proveedores/${id}`);
+  return data;
+};
+
+// ✅ Registrar una compra a proveedor
+export const registrarCompra = async (compraData) => {
+  const { data } = await api.post('/compras', compraData);
+  return data;
+};
+
+// ✅ Obtener historial de compras
+export const obtenerHistorialCompras = async () => {
+  const { data } = await api.get('/compras/historial');
+  return data;
+};
+
+// ✅ Comparar precios de materias primas por proveedor (si aplica)
+export const compararPrecios = async () => {
+  const { data } = await api.get('/compras/comparar-precios');
+  return data;
 };

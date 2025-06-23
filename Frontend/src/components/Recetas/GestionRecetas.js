@@ -5,6 +5,9 @@ import { guardarReceta, obtenerReceta } from '../../services/recetasService';
 import { obtenerTodasMateriasPrimas } from '../../services/inventarioService';
 import { obtenerPorId as obtenerProductoPorId } from '../../services/productosTerminadosService';
 
+// --- 1. IMPORTAMOS LA FUNCIÓN DE FORMATO ---
+import { formatCurrency } from '../../utils/formatters';
+
 const GestionRecetas = () => {
     const { productoId } = useParams();
     const navigate = useNavigate();
@@ -13,10 +16,13 @@ const GestionRecetas = () => {
     const [materiasPrimas, setMateriasPrimas] = useState([]);
     const [ingredientes, setIngredientes] = useState([]);
     const [descripcion, setDescripcion] = useState('');
+
+    // --- 2. AÑADIMOS UN NUEVO ESTADO PARA GUARDAR EL COSTO ---
+    const [costoEstimado, setCostoEstimado] = useState(0);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [cargando, setCargando] = useState(true);
 
-    // Definimos las unidades de medida aquí para usarlas en el formulario
     const unidadesDeMedida = ['g', 'kg', 'ml', 'L', 'unidades'];
 
     const cargarDatos = useCallback(async () => {
@@ -31,6 +37,10 @@ const GestionRecetas = () => {
             setProducto(dataProducto);
             setMateriasPrimas(dataMateriasPrimas);
             setDescripcion(dataReceta.descripcion || '');
+
+            // --- 3. GUARDAMOS EL COSTO ESTIMADO QUE VIENE DE LA BASE DE DATOS ---
+            setCostoEstimado(dataReceta.costo_estimado || 0);
+
             if (dataReceta.ingredientes && dataReceta.ingredientes.length > 0) {
                 setIngredientes(dataReceta.ingredientes);
             } else {
@@ -112,7 +122,6 @@ const GestionRecetas = () => {
                             <label className="form-label visually-hidden">Cantidad</label>
                             <input type="number" name="cantidad" placeholder="Cantidad" value={ing.cantidad} onChange={(e) => handleIngredienteChange(index, e)} className="form-control" min="0" step="0.01" required/>
                         </div>
-                        {/* --- CAMPO AÑADIDO --- */}
                         <div className="col-md-3">
                             <label className="form-label visually-hidden">Unidad</label>
                              <select name="unidad_medida" value={ing.unidad_medida} onChange={(e) => handleIngredienteChange(index, e)} className="form-select" required>
@@ -125,7 +134,10 @@ const GestionRecetas = () => {
                     </div>
                 ))}
                 <button type="button" onClick={agregarIngrediente} className="btn btn-outline-primary mt-2"><i className="fas fa-plus me-2"></i>Añadir Ingrediente</button>
-                <div className="mt-4 text-end">
+                
+                {/* --- 4. SECCIÓN CORREGIDA PARA MOSTRAR COSTO Y BOTÓN DE GUARDAR --- */}
+                <div className="d-flex justify-content-end align-items-center mt-4">
+                    <h4 className="me-4">Costo Estimado: {formatCurrency(costoEstimado)}</h4>
                     <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
                         {isSubmitting ? 'Guardando...' : 'Guardar Receta'}
                     </button>

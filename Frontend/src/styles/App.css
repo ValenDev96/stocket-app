@@ -98,3 +98,8 @@ body {
 .btn-accion i {
   font-size: 0.9rem;
 }
+
+.titulo-principal {
+  color: #2c3e50; /* Azul oscuro elegante */
+  font-weight: bold;
+}

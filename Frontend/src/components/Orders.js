@@ -1,10 +1,8 @@
-// Contenido 100% corregido y con nuevo estilo para: Frontend/src/components/Orders.js
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { obtenerPedidos, actualizarPedido, marcarPedidoDevuelto } from '../services/pedidosService';
 import { toast } from 'react-toastify';
-// --- IMPORTACIÓN AÑADIDA ---
+import { formatCurrency } from '../utils/formatters';
 import Dropdown from 'react-bootstrap/Dropdown';
 import '../styles/Orders.css';
 
@@ -57,7 +55,7 @@ const Orders = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <h2>Gestión de Pedidos</h2>
+                <h2>Gestión de pedidos</h2>
                 <button onClick={() => navigate('/orders/new')} className="btn btn-primary">
                     <i className="fas fa-plus me-2"></i>Crear Pedido
                 </button>
@@ -83,7 +81,7 @@ const Orders = () => {
                                 <td>{pedido.cliente_nombre || 'N/A'}</td>
                                 <td>{new Date(pedido.fecha_pedido).toLocaleDateString()}</td>
                                 <td>{new Date(pedido.fecha_entrega_estimada).toLocaleDateString()}</td>
-                                <td>${parseFloat(pedido.total_pedido).toFixed(2)}</td>
+                                <td>{formatCurrency(pedido.total_pedido)}</td>
                                 <td>
                                     <span className={`badge bg-${pedido.estado_pedido === 'completado' ? 'success' : 'warning'}`}>
                                         {pedido.estado_pedido}

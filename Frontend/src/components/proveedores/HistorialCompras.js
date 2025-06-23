@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 // --- PASO 1: IMPORTAMOS useNavigate ---
 import { useNavigate } from 'react-router-dom';
 import { obtenerHistorialCompras } from '../../services/proveedoresService';
+import { formatCurrency, formatQuantity } from '../../utils/formatters';
 
 const HistorialCompras = () => {
   // --- PASO 2: INICIALIZAMOS useNavigate ---
@@ -73,9 +74,9 @@ const HistorialCompras = () => {
                   <td>{new Date(compra.fecha_compra).toLocaleDateString()}</td>
                   <td>{compra.materia_prima_nombre}</td>
                   <td>{compra.proveedor_nombre}</td>
-                  <td>{compra.cantidad}</td>
-                  <td>${parseFloat(compra.precio_unitario).toFixed(2)}</td>
-                  <td>${(compra.cantidad * compra.precio_unitario).toFixed(2)}</td>
+                  <td>{formatQuantity(compra.cantidad)}</td> {/* Para cantidades */}
+                  <td>{formatCurrency(compra.precio_unitario)}</td> {/* Para precios */}
+                  <td>{formatCurrency(compra.cantidad * compra.precio_unitario)}</td> {/* Para el total calculado */}
                   <td>{compra.nombre_usuario || 'No disponible'}</td>
                 </tr>
               ))}

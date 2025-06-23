@@ -1,21 +1,32 @@
+// Contenido corregido para: Backend/routes/horasTrabajadasRoutes.js
+
 const express = require('express');
 const router = express.Router();
-const horasTrabajadasController = require('../controllers/horasTrabajadasController');
-const { protegerRuta } = require('../middleware/authMiddleware');
 
-// Obtener todas las horas trabajadas (admin) o por filtros
-router.get('/', protegerRuta, horasTrabajadasController.obtenerTodas);
+// --- CORRECCIÓN AQUÍ: Usamos los nombres exactos del controlador ---
+const {
+    obtenerHoras,
+    obtenerPorUsuario,
+    registrarHora,
+    actualizarHora,
+    eliminarHora
+} = require('../controllers/horasTrabajadasController');
 
-// Obtener horas trabajadas por usuario específico
-router.get('/usuario/:usuario_id', protegerRuta, horasTrabajadasController.obtenerPorUsuario);
+const { protegerRuta, autorizar } = require('../middleware/authMiddleware');
 
-// Crear nuevo registro de horas
-router.post('/', protegerRuta, horasTrabajadasController.crear);
+const ROLES_PERMITIDOS = ['Administrador'];
 
-// Actualizar registro de horas
-router.put('/:id', protegerRuta, horasTrabajadasController.actualizar);
 
-// Eliminar registro de horas
-router.delete('/:id', protegerRuta, horasTrabajadasController.eliminar);
+// --- AHORA LAS RUTAS USAN LAS FUNCIONES CON LOS NOMBRES CORRECTOS ---
+
+router.get('/', protegerRuta, autorizar(ROLES_PERMITIDOS), obtenerHoras);
+
+router.get('/usuario/:usuario_id', protegerRuta, autorizar(ROLES_PERMITIDOS), obtenerPorUsuario);
+
+router.post('/', protegerRuta, autorizar(ROLES_PERMITIDOS), registrarHora);
+
+router.put('/:id', protegerRuta, autorizar(ROLES_PERMITIDOS), actualizarHora);
+
+router.delete('/:id', protegerRuta, autorizar(ROLES_PERMITIDOS), eliminarHora);
 
 module.exports = router;

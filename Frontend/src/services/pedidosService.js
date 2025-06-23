@@ -26,6 +26,19 @@ export const obtenerPedidos = async () => {
   return await response.json();
 };
 
+export const obtenerPedidosPendientes = async () => {
+    const endpoint = `${API_URL_BASE}/pedidos/pendientes`;
+    const response = await fetch(endpoint, {
+        headers: createAuthHeaders()
+    });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error al obtener los pedidos pendientes' }));
+        throw new Error(errorData.message);
+    }
+    return await response.json();
+};
+
+
 /**
  * Crea un nuevo pedido.
  * @param {object} pedidoData - Los datos del nuevo pedido.

@@ -164,3 +164,31 @@
     padding: 2rem;
     overflow-y: auto;
 }
+
+.submenu {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.submenu-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    color: inherit;
+    width: 100%;
+    padding: 10px 15px;
+    cursor: pointer;
+    font: inherit;
+}
+
+.submenu-icon {
+    margin-left: auto;
+}
+
+.sub-link {
+    padding-left: 30px;
+    font-size: 0.9rem;
+}

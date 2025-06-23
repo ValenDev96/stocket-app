@@ -1,293 +1,125 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { horasTrabajadasService } from '../../services/horasTrabajadasService';
-import { useAuth } from '../../context/AuthContext';
-import { Button, Table, Modal, Form, Alert, Card } from 'react-bootstrap';
-import '../../styles/horasTrabajas.css';
+import { toast } from 'react-toastify';
+import { obtenerHoras, eliminarHora } from '../../services/horasTrabajadasService'; // Asumiendo que el servicio se llama así
+import { formatQuantity } from '../../utils/formatters';
+import Swal from 'sweetalert2';
+import '../../styles/providers.css'; // Reutilizamos los estilos
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 
 const HorasTrabajadas = () => {
-    const { usuario } = useAuth();
-    const [horasTrabajadas, setHorasTrabajadas] = useState([]);
+    const [registros, setRegistros] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showModal, setShowModal] = useState(false);
-    const [editingHora, setEditingHora] = useState(null);
-    const [formData, setFormData] = useState({
-        usuario_id: '',
-        fecha: '',
-        hora_inicio: '',
-        hora_fin: '',
-        descripcion: ''
-    });
+    // Podríamos añadir un modal para crear/editar en el futuro
+    // const [showModal, setShowModal] = useState(false);
 
-    // Verificar si el usuario es admin
-    const esAdmin = usuario?.rol_nombre === 'Administrador';
-
-    const cargarHorasTrabajadas = useCallback(async () => {
+    const fetchHorasTrabajadas = useCallback(async () => {
         try {
             setLoading(true);
-            let data;
-            if (esAdmin) {
-                // Admin ve todas las horas de trabajo
-                data = await horasTrabajadasService.obtenerTodas();
-            } else {
-                // Otros roles solo ven sus propias horas
-                data = await horasTrabajadasService.obtenerPorUsuario(usuario.id);
-            }
-            setHorasTrabajadas(data);
+            // Como esta vista ahora es solo para el Admin, siempre obtenemos todos los registros
+            const data = await obtenerHoras();
+            setRegistros(data);
         } catch (error) {
-            console.error('Error al cargar horas de trabajo:', error);
-            setError('Error al cargar las horas de trabajo');
+            toast.error(error.message || 'No se pudieron cargar los registros.');
         } finally {
             setLoading(false);
         }
-    }, [esAdmin, usuario?.id]);
+    }, []);
 
     useEffect(() => {
-        cargarHorasTrabajadas();
-    }, [cargarHorasTrabajadas]);
+        fetchHorasTrabajadas();
+    }, [fetchHorasTrabajadas]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            // Para usuarios no admin, siempre usar su propio ID
-            const dataToSend = {
-                ...formData,
-                usuario_id: esAdmin ? formData.usuario_id : usuario.id
-            };
-
-            if (editingHora) {
-                await horasTrabajadasService.actualizar(editingHora.id, dataToSend);
-            } else {
-                await horasTrabajadasService.crear(dataToSend);
+    const handleEliminar = (id) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: "No podrás revertir esta acción.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Sí, ¡eliminar!',
+            cancelButtonText: 'Cancelar'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    await eliminarHora(id);
+                    toast.success('Registro eliminado.');
+                    fetchHorasTrabajadas(); // Recargamos la lista
+                } catch (error) {
+                    toast.error(error.message || 'Error al eliminar el registro.');
+                }
             }
-            await cargarHorasTrabajadas();
-            handleCloseModal();
-        } catch (error) {
-            console.error('Error al guardar:', error);
-            setError('Error al guardar la hora de trabajo');
-        }
-    };
-
-    const handleEdit = (hora) => {
-        setEditingHora(hora);
-        setFormData({
-            usuario_id: hora.usuario_id,
-            fecha: hora.fecha,
-            hora_inicio: hora.hora_inicio,
-            hora_fin: hora.hora_fin,
-            descripcion: hora.descripcion || ''
-        });
-        setShowModal(true);
-    };
-
-    const handleDelete = async (id) => {
-        if (window.confirm('¿Estás seguro de que quieres eliminar esta hora de trabajo?')) {
-            try {
-                await horasTrabajadasService.eliminar(id);
-                await cargarHorasTrabajadas();
-            } catch (error) {
-                console.error('Error al eliminar:', error);
-                setError('Error al eliminar la hora de trabajo');
-            }
-        }
-    };
-
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingHora(null);
-        setFormData({
-            usuario_id: esAdmin ? '' : usuario.id,
-            fecha: '',
-            hora_inicio: '',
-            hora_fin: '',
-            descripcion: ''
         });
     };
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
+    
+    // Función de marcador de posición para la edición
+    const handleEditar = (registro) => {
+        toast.info(`Funcionalidad de editar para el registro #${registro.id} pendiente.`);
+        // Aquí se abriría el modal para la edición
     };
 
-    if (loading) return <div className="loading">Cargando...</div>;
+    // Función de marcador de posición para crear
+    const handleCrear = () => {
+        toast.info('Funcionalidad de crear nuevo registro pendiente.');
+        // Aquí se abriría el modal para la creación
+    }
+
+    if (loading) {
+        return <div className="text-center mt-5"><div className="spinner-border text-primary"></div></div>;
+    }
 
     return (
-        <div className="horas-trabajo-container">
-            <Card className="shadow-sm">
-                <Card.Body>
-                    <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h4 className="mb-0">
-                            {esAdmin ? 'Gestión de Horas de Trabajo - Todas' : 'Mis Horas de Trabajo'}
-                        </h4>
-                        <Button 
-                            variant="primary"
-                            onClick={() => {
-                                setFormData({
-                                    usuario_id: esAdmin ? '' : usuario.id,
-                                    fecha: '',
-                                    hora_inicio: '',
-                                    hora_fin: '',
-                                    descripcion: ''
-                                });
-                                setShowModal(true);
-                            }}
-                        >
-                            <i className="fas fa-plus me-1"></i>
-                            Nueva Hora de Trabajo
-                        </Button>
-                    </div>
+        <div className="gestion-proveedores-page">
+            <div className="page-header-modern">
+                <h2>Gestión de Horas de Trabajo</h2>
+                <button className="btn btn-primary d-flex align-items-center gap-2" onClick={handleCrear}>
+                    <FaPlus />
+                    Nueva Hora de Trabajo
+                </button>
+            </div>
 
-                    {error && (
-                        <Alert variant="danger" onClose={() => setError(null)} dismissible>
-                            {error}
-                        </Alert>
-                    )}
-
-                    <Table striped bordered hover responsive className="table-container">
-                        <thead className="table-dark">
-                            <tr>
-                                {esAdmin && <th>Usuario</th>}
-                                <th>Fecha</th>
-                                <th>Hora Inicio</th>
-                                <th>Hora Fin</th>
-                                <th>Total Horas</th>
-                                <th>Descripción</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {horasTrabajadas.map(hora => (
-                                <tr key={hora.id}>
-                                    {esAdmin && (
-                                        <td>{hora.usuario_nombre || `Usuario ${hora.usuario_id}`}</td>
-                                    )}
-                                    <td>{new Date(hora.fecha).toLocaleDateString()}</td>
-                                    <td>{hora.hora_inicio}</td>
-                                    <td>{hora.hora_fin}</td>
-                                    <td>{hora.total_horas || 'N/A'}</td>
-                                    <td>{hora.descripcion || '-'}</td>
-                                    <td>
-                                        <div className="d-flex gap-2">
-                                            <Button
-                                                size="sm"
-                                                variant="warning"
-                                                onClick={() => handleEdit(hora)}
-                                                title="Editar"
-                                            >
-                                                <i className="fas fa-edit"></i>
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                variant="danger"
-                                                onClick={() => handleDelete(hora.id)}
-                                                title="Eliminar"
-                                            >
-                                                <i className="fas fa-trash"></i>
-                                            </Button>
-                                        </div>
+            <div className="table-responsive">
+                <table className="table table-hover table-modern table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Fecha</th>
+                            <th>Hora Inicio</th>
+                            <th>Hora Fin</th>
+                            <th>Total Horas</th>
+                            <th className="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {registros.length > 0 ? (
+                            registros.map((registro) => (
+                                <tr key={registro.id}>
+                                    {/* --- CORRECCIÓN AQUÍ --- */}
+                                    {/* Usamos 'nombre_usuario', que es el campo correcto que viene del backend */}
+                                    <td>{registro.nombre_usuario || 'No disponible'}</td>
+                                    
+                                    <td>{new Date(registro.fecha).toLocaleDateString()}</td>
+                                    <td>{registro.hora_inicio}</td>
+                                    <td>{registro.hora_fin || 'N/A'}</td>
+                                    <td>{registro.total_horas ? formatQuantity(registro.total_horas) : 'N/A'}</td>
+                                    <td className="text-center">
+                                        <button className="circular-icon-button yellow" title="Editar" onClick={() => handleEditar(registro)}>
+                                            <FaEdit />
+                                        </button>
+                                        <button className="circular-icon-button red" title="Eliminar" onClick={() => handleEliminar(registro.id)}>
+                                            <FaTrash />
+                                        </button>
                                     </td>
                                 </tr>
-                            ))}
-                            {horasTrabajadas.length === 0 && (
-                                <tr>
-                                    <td colSpan={esAdmin ? "7" : "6"} className="text-center text-muted">
-                                        No hay horas de trabajo registradas
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </Table>
-                </Card.Body>
-            </Card>
-
-            {/* Modal */}
-            <Modal show={showModal} onHide={handleCloseModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title>{editingHora ? 'Editar' : 'Nueva'} Hora de Trabajo</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Form onSubmit={handleSubmit}>
-                        {esAdmin ? (
-                            <Form.Group className="mb-3">
-                                <Form.Label>Usuario ID:</Form.Label>
-                                <Form.Control
-                                    type="number"
-                                    name="usuario_id"
-                                    value={formData.usuario_id}
-                                    onChange={handleInputChange}
-                                    required
-                                    placeholder="Ingrese el ID del usuario"
-                                />
-                            </Form.Group>
+                            ))
                         ) : (
-                            <div className="mb-3">
-                                <Form.Label>Registrando horas para:</Form.Label>
-                                <div className="alert alert-info d-flex align-items-center">
-                                    <i className="fas fa-user me-2"></i>
-                                    <strong>{usuario.nombre || usuario.email || 'Mi cuenta'}</strong>
-                                </div>
-                            </div>
+                            <tr>
+                                <td colSpan="6" className="text-center">No hay registros de horas trabajadas.</td>
+                            </tr>
                         )}
-
-                        <Form.Group className="mb-3">
-                            <Form.Label>Fecha:</Form.Label>
-                            <Form.Control
-                                type="date"
-                                name="fecha"
-                                value={formData.fecha}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        
-                        <Form.Group className="mb-3">
-                            <Form.Label>Hora Inicio:</Form.Label>
-                            <Form.Control
-                                type="time"
-                                name="hora_inicio"
-                                value={formData.hora_inicio}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        
-                        <Form.Group className="mb-3">
-                            <Form.Label>Hora Fin:</Form.Label>
-                            <Form.Control
-                                type="time"
-                                name="hora_fin"
-                                value={formData.hora_fin}
-                                onChange={handleInputChange}
-                                required
-                            />
-                        </Form.Group>
-                        
-                        <Form.Group className="mb-3">
-                            <Form.Label>Descripción:</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                name="descripcion"
-                                value={formData.descripcion}
-                                onChange={handleInputChange}
-                                rows={3}
-                                placeholder="Describe las actividades realizadas..."
-                            />
-                        </Form.Group>
-                        
-                        <div className="d-flex justify-content-end gap-2">
-                            <Button variant="secondary" onClick={handleCloseModal}>
-                                Cancelar
-                            </Button>
-                            <Button variant="primary" type="submit">
-                                {editingHora ? 'Actualizar' : 'Crear'}
-                            </Button>
-                        </div>
-                    </Form>
-                </Modal.Body>
-            </Modal>
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

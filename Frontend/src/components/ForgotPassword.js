@@ -1,50 +1,49 @@
 import React, { useState } from 'react';
-import '../styles/ForgotPassword.css';
+import { forgotPassword } from '../services/authService';
+import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [resetSent, setResetSent] = useState(false);
+    const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
 
-  const handleResetPassword = (e) => {
-    e.preventDefault();
-    console.log('Enviando recuperación a:', email);
-    setResetSent(true);
-    // Aquí va la lógica para enviar email de recuperación
-  };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage('');
+        try {
+            const data = await forgotPassword(email);
+            setMessage(data.message);
+            toast.success(data.message);
+        } catch (error) {
+            toast.error(error.message || 'Error al enviar la solicitud.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  return (
-    <div className="login-container">
-      <div className="login-card">
-          <img src="/img/Home/logoEM.jpg" alt="Logo Empanadas Emanuel" className="logoEM" />
-        <h2>Olvidaste tu contraseña</h2>
-        {!resetSent ? (
-          <form onSubmit={handleResetPassword}>
-            <div className="form-group1">
-              <label htmlFor="resetEmail">Correo Electrónico</label>
-              <input
-                autoFocus
-                type="email"
-                id="resetEmail"
-                placeholder="Ingresa tu correo"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    return (
+        <div className="d-flex justify-content-center align-items-center vh-100">
+            <div className="card p-4" style={{width: '400px'}}>
+                <h3>Restablecer Contraseña</h3>
+                <p>Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+                <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                        <label htmlFor="email" className="form-label">Correo Electrónico</label>
+                        <input type="email" id="email" className="form-control" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    </div>
+                    {message && <div className="alert alert-info">{message}</div>}
+                    <button type="submit" className="btn btn-primary w-100" disabled={loading}>
+                        {loading ? 'Enviando...' : 'Enviar Enlace'}
+                    </button>
+                </form>
+                <div className="text-center mt-3">
+                    <Link to="/login">Volver a Iniciar Sesión</Link>
+                </div>
             </div>
-            <button type="submit" className="login-button">Enviar</button>
-          </form>
-        ) : (
-          <p className="confirmation-message">
-            Se ha enviado un enlace de recuperación al correo proporcionado.
-          </p>
-        )}
-        <div className="forgot-password">
-          <Link to="/Login" className="link-button">Volver al inicio de sesión</Link>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ForgotPassword;

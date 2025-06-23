@@ -57,7 +57,7 @@ function Dashboard() {
     return (
         <div className="dashboard-container">
             <header className="page-header">
-                <h2 className="fade-in">Bienvenido de nuevo, {usuario.nombre_usuario}!</h2>
+                <h2 className="fade-in">Hola, {usuario.nombre_usuario}</h2>
                 <p className="text-muted fade-in" style={{ animationDelay: '0.2s' }}>Aquí tienes un resumen de la operación de hoy.</p>
             </header>
 

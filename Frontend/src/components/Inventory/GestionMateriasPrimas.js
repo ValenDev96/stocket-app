@@ -10,6 +10,7 @@ import HistorialModal from './HistorialModal';
 import AjusteInventarioModal from './AjusteInventarioModal';
 import GestionLotesModal from './GestionLoteModal';
 import { toast } from 'react-toastify';
+import { formatQuantity } from '../../utils/formatters'; 
 
 // Componente de Formulario Interno (sin cambios)
 const MateriaPrimaForm = ({ materia, onSubmit, onCancel }) => {
@@ -200,7 +201,7 @@ const GestionMateriasPrimas = () => {
       {modo === 'lista' ? (
         <>
           <div className="page-header">
-            <h2>Gestión de Materias Primas</h2>
+            <h2>Gestión de materias primas</h2>
             <button onClick={handleCrear} className="btn btn-primary">
               <i className="fas fa-plus me-2"></i>Agregar Nueva
             </button>
@@ -225,6 +226,7 @@ const GestionMateriasPrimas = () => {
                   <th>ID</th>
                   <th>Nombre</th>
                   <th>Stock Actual</th>
+                  <th>Umbral de Alerta</th>
                   <th>Unidad</th>
                   <th>Acciones</th>
                 </tr>
@@ -235,7 +237,8 @@ const GestionMateriasPrimas = () => {
                     <tr key={materia.id}>
                       <td>{materia.id}</td>
                       <td>{materia.nombre}</td>
-                      <td>{materia.stock_actual}</td>
+                      <td>{formatQuantity(materia.stock_actual)}</td>
+                      <td>{formatQuantity(materia.umbral_alerta)}</td>
                       <td>{materia.unidad_medida}</td>
                       <td className="acciones-cell">
                         <button onClick={() => handleGestionarLotes(materia)} className="btn btn-sm btn-accion btn-primary" title="Gestionar Lotes"><i className="fas fa-boxes"></i></button>
@@ -247,7 +250,7 @@ const GestionMateriasPrimas = () => {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="5" className="text-center">No se encontraron materias primas.</td></tr>
+                  <tr><td colSpan="6" className="text-center">No se encontraron materias primas.</td></tr>
                 )}
               </tbody>
             </table>

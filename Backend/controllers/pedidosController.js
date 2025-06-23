@@ -52,6 +52,59 @@ exports.obtenerPorId = async (req, res) => {
   }
 };
 
+exports.obtenerPendientes = async (req, res) => {
+  try {
+    // 1. Hacemos una consulta más simple que une las tablas.
+    // Esto puede devolver filas de pedidos duplicadas si un pedido tiene varios productos.
+    const query = `
+      SELECT 
+        p.id, 
+        p.fecha_entrega_estimada, 
+        c.nombre as cliente_nombre,
+        ip.producto_terminado_id as producto_id,
+        pt.nombre as producto_nombre,
+        ip.cantidad
+      FROM pedidos p
+      JOIN clientes c ON p.cliente_id = c.id
+      JOIN items_pedido ip ON p.id = ip.pedido_id
+      JOIN productos_terminados pt ON ip.producto_terminado_id = pt.id
+      WHERE p.estado_pedido = 'pendiente'
+      ORDER BY p.fecha_entrega_estimada ASC;
+    `;
+    const [rows] = await pool.query(query);
+
+    // 2. Agrupamos los resultados en JavaScript.
+    const pedidosAgrupados = {};
+
+    for (const row of rows) {
+      // Si el pedido no está en nuestro objeto, lo creamos.
+      if (!pedidosAgrupados[row.id]) {
+        pedidosAgrupados[row.id] = {
+          id: row.id,
+          fecha_entrega_estimada: row.fecha_entrega_estimada,
+          cliente_nombre: row.cliente_nombre,
+          items: [] // Creamos un array vacío para sus productos.
+        };
+      }
+      // Añadimos el producto (item) al pedido correspondiente.
+      pedidosAgrupados[row.id].items.push({
+        producto_id: row.producto_id,
+        producto_nombre: row.producto_nombre,
+        cantidad: row.cantidad
+      });
+    }
+
+    // 3. Convertimos el objeto de pedidos de nuevo a un array para enviarlo como JSON.
+    const resultadoFinal = Object.values(pedidosAgrupados);
+
+    res.status(200).json(resultadoFinal);
+
+  } catch (error) {
+    console.error("Error al obtener pedidos pendientes:", error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 // Crear un nuevo pedido
 exports.crear = async (req, res) => {
   const connection = await pool.getConnection();

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-// --- CORRECCIÓN: Importamos 'useNavigate' para la redirección ---
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import '../styles/Sidebar.css'; 
+import '../styles/Sidebar.css';
 
 const ROLES = {
     ADMIN: 'Administrador',
@@ -14,23 +13,23 @@ const ROLES = {
 const Sidebar = () => {
     const { usuario, logout } = useAuth();
     const [isSidebarOpen, setSidebarOpen] = useState(true);
-    // --- CORRECCIÓN: Inicializamos useNavigate ---
+    const [reportesOpen, setReportesOpen] = useState(false);
     const navigate = useNavigate();
 
-    if (!usuario) { return null; }
+    if (!usuario) return null;
 
     const puedeVerInventarioYProveedores = [ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR].includes(usuario.rol_nombre);
     const puedeVerProduccionYProductos = [ROLES.ADMIN, ROLES.PRODUCCION].includes(usuario.rol_nombre);
     const puedeVerPedidos = [ROLES.ADMIN, ROLES.PRODUCCION, ROLES.AUXILIAR].includes(usuario.rol_nombre);
-    const puedeVerHorasTrabajadas = [ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR].includes(usuario.rol_nombre); // Nueva línea
+    const puedeVerPagos = [ROLES.ADMIN, ROLES.AUXILIAR].includes(usuario.rol_nombre);
     const esAdmin = usuario.rol_nombre === ROLES.ADMIN;
 
     const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
+    const toggleReportes = () => setReportesOpen(!reportesOpen);
 
-    // --- CORRECCIÓN: Nueva función para manejar el logout ---
     const handleLogout = () => {
-        logout(); // Limpia el contexto y localStorage
-        navigate('/login'); // Redirige al login
+        logout();
+        navigate('/login');
     };
 
     return (
@@ -41,6 +40,7 @@ const Sidebar = () => {
                     <i className={`fas ${isSidebarOpen ? 'fa-times' : 'fa-bars'}`}></i>
                 </button>
             </div>
+
             <nav className="sidebar-nav">
                 <NavLink to="/dashboard" className="nav-link">
                     <i className="fas fa-th-large"></i>
@@ -59,7 +59,7 @@ const Sidebar = () => {
                         </NavLink>
                     </>
                 )}
-                
+
                 {puedeVerProduccionYProductos && (
                     <>
                         <NavLink to="/finished-products" className="nav-link">
@@ -73,11 +73,10 @@ const Sidebar = () => {
                     </>
                 )}
 
-                {/* ✅ Nuevo enlace para Horas de Trabajo */}
-                {puedeVerHorasTrabajadas && (
+                {esAdmin && (
                     <NavLink to="/horas-trabajadas" className="nav-link">
                         <i className="fas fa-clock"></i>
-                        <span>Horas de Trabajo</span>
+                        <span>Horas de trabajo</span>
                     </NavLink>
                 )}
 
@@ -87,7 +86,7 @@ const Sidebar = () => {
                         <span>Pedidos</span>
                     </NavLink>
                 )}
-                 {/* ✅ Enlace para el módulo Clientes */}
+
                 {(usuario.rol_nombre === ROLES.ADMIN || usuario.rol_nombre === ROLES.AUXILIAR) && (
                     <NavLink to="/clientes" className="nav-link">
                         <i className="fas fa-users"></i>
@@ -95,13 +94,51 @@ const Sidebar = () => {
                     </NavLink>
                 )}
 
-                {esAdmin && (
-                    <NavLink to="/admin/crear-usuario" className="nav-link">
-                        <i className="fas fa-user-plus"></i>
-                        <span>Admin Usuarios</span>
+                {puedeVerPagos && (
+                    <NavLink
+                        to="/pagos"
+                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                    >
+                        <i className="fas fa-dollar-sign"></i>
+                        <span>Pagos</span>
                     </NavLink>
                 )}
+
+                {/* ✅ Submenú de Reportes solo para Admin */}
+                {esAdmin && (
+                    <>
+                        <button onClick={toggleReportes} className="nav-link submenu-toggle">
+                            <i className="fas fa-chart-bar"></i>
+                            <span>Reportes</span>
+                            <i className={`fas ${reportesOpen ? 'fa-chevron-up' : 'fa-chevron-down'} submenu-icon`}></i>
+                        </button>
+                        {reportesOpen && (
+                            <div className="submenu">
+                                <NavLink to="/reportes/ventas" className="nav-link sub-link">
+                                    <i className="fas fa-chart-line"></i>
+                                    <span>Ventas</span>
+                                </NavLink>
+                                <NavLink to="/reportes/productos" className="nav-link sub-link">
+                                    <i className="fas fa-chart-pie"></i>
+                                    <span>Fidelización</span>
+                                </NavLink>
+                            </div>
+                        )}
+
+                        <NavLink to="/admin/gestion-usuarios" className="nav-link">
+                            <i className="fas fa-users-cog"></i> {/* <-- Ícono cambiado */}
+                            <span>Admin Usuarios</span>
+                        </NavLink>
+
+                        <NavLink to="/admin/auditoria" className="nav-link"> {/* <-- AÑADIR ENLACE */}
+                            <i className="fas fa-history"></i>
+                            <span>Auditoría</span>
+                            </NavLink>
+
+                    </>
+                )}
             </nav>
+
             <div className="sidebar-footer">
                 <div className="user-info">
                     <i className="fas fa-user-circle"></i>
@@ -110,8 +147,7 @@ const Sidebar = () => {
                         <span className="user-role">{usuario.rol_nombre}</span>
                     </div>
                 </div>
-                 {/* --- CORRECCIÓN: El botón ahora llama a handleLogout --- */}
-                <button onClick={handleLogout} className="logout-button">
+                <button type="button" onClick={handleLogout} className="logout-button">
                     <i className="fas fa-sign-out-alt"></i>
                     <span>Cerrar Sesión</span>
                 </button>
