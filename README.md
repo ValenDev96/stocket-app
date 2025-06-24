@@ -78,21 +78,13 @@ Sigue estos pasos para ejecutar el proyecto en un entorno de desarrollo local.
 
 ### **3. Configuración de la Base de Datos**
 
-Tienes dos opciones para configurar la base de datos:
+Tienes la siguiente opción para configurar la base de datos:
 
-* **Opción A (Recomendada para probar): Usar los datos de prueba.**
+* **Opción (Recomendada para probar): Usar los datos de prueba.**
     1.  Crea una base de datos en MySQL llamada `app_db_st`.
     2.  Importa el archivo `app_db_st.sql` usando una herramienta como phpMyAdmin. Esto creará todas las tablas y las llenará con datos de ejemplo.
     3.  **Importante:** Las contraseñas en estos datos están encriptadas. Para iniciar sesión como administrador, ejecuta la consulta SQL que te proporcioné para establecer la contraseña de un usuario admin a "admin123".
 
-* **Opción B (Para una instalación limpia): Usar el script de seeding.**
-    1.  Crea una base de datos vacía en MySQL llamada `app_db_st`.
-    2.  **No importes ningún archivo .sql.**
-    3.  En la terminal, dentro de la carpeta `Backend`, ejecuta el siguiente comando:
-        ```sh
-        npm run seed
-        ```
-    4.  Esto creará las tablas y un único usuario administrador con `email: admin@stocket.com` y `contraseña: admin123`.
 
 ### **4. Configuración del Frontend**
 
@@ -103,10 +95,6 @@ Tienes dos opciones para configurar la base de datos:
 2.  Instala las dependencias:
     ```sh
     npm install
-    ```
-3.  Crea un archivo `.env` en la raíz de la carpeta `Frontend` y añade la siguiente variable:
-    ```env
-    REACT_APP_API_URL=http://localhost:3000/api
     ```
 
 ### **5. Ejecutar la Aplicación**

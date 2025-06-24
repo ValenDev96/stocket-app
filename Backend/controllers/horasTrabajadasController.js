@@ -5,11 +5,11 @@ const pool = require('../config/db');
  */
 exports.obtenerHoras = async (req, res) => {
     try {
-        // --- CORRECCIÓN: Se cambia a LEFT JOIN para asegurar que todos los registros de horas se muestren ---
         const query = `
             SELECT 
                 rh.id, 
-                u.nombre_usuario, 
+                u.nombre_usuario,
+                rh.empleado_id, 
                 DATE(rh.fecha_hora_ingreso) as fecha, 
                 TIME(rh.fecha_hora_ingreso) as hora_inicio, 
                 TIME(rh.fecha_hora_salida) as hora_fin, 
@@ -32,17 +32,16 @@ exports.obtenerHoras = async (req, res) => {
 exports.obtenerPorUsuario = async (req, res) => {
     const { usuario_id } = req.params;
     try {
-        // --- CORRECCIÓN: Se cambia a LEFT JOIN también aquí ---
         const query = `
             SELECT 
-                rh.id, u.nombre_usuario, 
+                rh.id, u.nombre_usuario, rh.empleado_id,
                 DATE(rh.fecha_hora_ingreso) as fecha, 
                 TIME(rh.fecha_hora_ingreso) as hora_inicio, 
                 TIME(rh.fecha_hora_salida) as hora_fin, 
                 rh.horas_trabajadas as total_horas
             FROM registro_horas rh
             LEFT JOIN usuarios u ON rh.empleado_id = u.empleado_id
-            WHERE u.id = ?
+            WHERE u.empleado_id = ?
             ORDER BY rh.fecha_hora_ingreso DESC
         `;
         const [registros] = await pool.query(query, [usuario_id]);
@@ -63,7 +62,6 @@ exports.registrarHora = async (req, res) => {
         return res.status(400).json({ message: 'Empleado, fecha y hora de inicio son obligatorios.' });
     }
 
-    // --- CORRECCIÓN EN LA LÓGICA DE FECHAS Y HORAS ---
     const fecha_hora_ingreso = `${fecha} ${hora_inicio}`;
     let fecha_hora_salida = null;
     let horas_trabajadas = null;
@@ -78,7 +76,6 @@ exports.registrarHora = async (req, res) => {
     }
 
     try {
-        // --- CORRECCIÓN EN LA CONSULTA INSERT ---
         const query = `
             INSERT INTO registro_horas (empleado_id, fecha_hora_ingreso, fecha_hora_salida, horas_trabajadas) 
             VALUES (?, ?, ?, ?)
@@ -96,17 +93,48 @@ exports.registrarHora = async (req, res) => {
  * @description Actualiza un registro de hora existente.
  */
 exports.actualizarHora = async (req, res) => {
-    // ... (La lógica de actualizar y eliminar también usarían esta nueva estructura)
-    // Se deja como ejercicio o se puede completar si es necesario.
-    // Por ahora, las funciones de obtener datos ya están corregidas, que es lo que causa el error.
-    res.status(501).json({ message: 'La función de actualizar aún no está implementada con la nueva lógica.' });
+    const { id } = req.params;
+    const { empleado_id, fecha, hora_inicio, hora_fin } = req.body;
+
+    if (!empleado_id || !fecha || !hora_inicio) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios.' });
+    }
+
+    const fecha_hora_ingreso = `${fecha} ${hora_inicio}`;
+    let fecha_hora_salida = null;
+    let horas_trabajadas = null;
+
+    if (hora_fin) {
+        fecha_hora_salida = `${fecha} ${hora_fin}`;
+        const inicio = new Date(fecha_hora_ingreso);
+        const fin = new Date(fecha_hora_salida);
+        if (fin > inicio) {
+            horas_trabajadas = ((fin - inicio) / (1000 * 60 * 60)).toFixed(2);
+        }
+    }
+
+    try {
+        const query = `
+            UPDATE registro_horas 
+            SET empleado_id = ?, fecha_hora_ingreso = ?, fecha_hora_salida = ?, horas_trabajadas = ? 
+            WHERE id = ?
+        `;
+        const [result] = await pool.query(query, [empleado_id, fecha_hora_ingreso, fecha_hora_salida, horas_trabajadas, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: 'Registro no encontrado.' });
+        }
+        res.status(200).json({ message: 'Registro de hora actualizado exitosamente.' });
+    } catch (error) {
+        console.error("Error al actualizar hora:", error);
+        res.status(500).json({ message: 'Error interno del servidor.' });
+    }
 };
 
 /**
  * @description Elimina un registro de hora.
  */
 exports.eliminarHora = async (req, res) => {
-    // ... (La lógica de eliminar no necesita cambios ya que solo usa el ID)
     const { id } = req.params;
     try {
         const [result] = await pool.query('DELETE FROM registro_horas WHERE id = ?', [id]);
