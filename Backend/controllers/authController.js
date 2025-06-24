@@ -1,99 +1,184 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
-//hola
-// Función para el registro de nuevos usuarios
-exports.register = async (req, res) => {
-  
-  const { nombre_usuario, apellido, email, password, rol_id,empleado_id } = req.body; // Ajusta los nombres según tu formulario
-  
-  try {
-    console.log('Datos recibidos en registro:', req.body);
-    // Verificar si el usuario ya existe por email (o nombre de usuario, según tu lógica)
-    const [existingUser] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]); // O WHERE nombre_usuario = ?
+const crypto = require('crypto');
+const { sendEmail } = require('../utils/emailHelper');
 
-    if (existingUser.length > 0) {
-      return res.status(409).json({ message: 'El usuario con este email ya existe' }); // 409 Conflict
+// --- La función de registro se mantiene igual ---
+exports.register = async (req, res) => {
+    // ... tu código de registro existente es correcto y no necesita cambios
+    const { nombre_usuario, apellido, email, password, rol_id } = req.body;
+
+    if (!nombre_usuario || !email || !password || !rol_id) {
+        return res.status(400).json({ message: 'Faltan campos obligatorios.' });
     }
 
-    // Hashear la contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const connection = await pool.getConnection();
 
-    const empleadoIdNumber = empleado_id ? Number(empleado_id) : null;
+    try {
+        await connection.beginTransaction();
+        const empleadoQuery = 'INSERT INTO empleados (nombre_usuario, apellido, correo, rol_id) VALUES (?, ?, ?, ?)';
+        const empleadoValues = [nombre_usuario, apellido, email, rol_id];
+        const [empleadoResult] = await connection.query(empleadoQuery, empleadoValues);
+        const newEmpleadoId = empleadoResult.insertId;
 
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-  const [result] = await pool.query(
-  `INSERT INTO usuarios (nombre_usuario, apellido, contrasena, rol_id, empleado_id, activo, recordar_sesion, fecha_creacion) 
-   VALUES (?, ?, ?, ?, ?, 1, 0, NOW())`,
-  [nombre_usuario, apellido, hashedPassword, rol_id || 2,  empleadoIdNumber] // activo=1, recordar_sesion=0 // Asigna un rol por defecto (ej: 2 para 'usuario')
-    );
+        const usuarioQuery = `
+          INSERT INTO usuarios (nombre_usuario, apellido, email, contrasena, rol_id, activo, fecha_creacion, empleado_id) 
+          VALUES (?, ?, ?, ?, ?, ?, NOW(), ?)
+        `;
+        const usuarioValues = [nombre_usuario, apellido, email, hashedPassword, rol_id, 1, newEmpleadoId];
 
-    const userId = result.insertId;
+        await connection.query(usuarioQuery, usuarioValues);
+        await connection.commit();
 
-    // Crear un token JWT para el usuario recién registrado (opcional)
-    const token = jwt.sign(
-      { id: userId, email: email, rol_id: role_id || 2 }, // Ajusta la información del payload
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }
-    );
+        res.status(201).json({
+            message: 'Usuario y empleado registrados exitosamente'
+        });
 
-    // Enviar una respuesta de éxito con el token (opcional) y la información del usuario
-    res.status(201).json({ // 201 Created
-      message: 'Usuario registrado exitosamente',
-      token: token,
-      user: {
-        id: userId,
-        nombre_usuario: nombre_usuario,
-        apellido: apellido,
-        email: email,
-        rol_id: rol_id || 2
-      }
-    });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error en la transacción de registro:', error);
 
- } catch (error) {
-  console.error('Error al registrar usuario:', error);
-  res.status(500).json({ message: 'Error al registrar usuario' });
-}
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({ message: 'El correo electrónico ya se encuentra registrado.' });
+        }
+
+        res.status(500).json({ message: 'Error interno del servidor al registrar.' });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
 };
 
-// Función para el login
+
+// --- FUNCIÓN DE LOGIN CORREGIDA Y MEJORADA ---
 exports.login = async (req, res) => {
-  const { email, contrasena } = req.body;
+    const { email, contrasena } = req.body;
 
-  try {
-    // Buscar al usuario en la base de datos
-    const [rows] = await pool.query('SELECT * FROM usuarios WHERE email = ?', [email]);
-
-    if (rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+    if (!email || !contrasena) {
+        return res.status(400).json({ message: 'El correo y la contraseña son obligatorios.' });
     }
 
-    const usuario = rows[0];
+    try {
+        const query = `
+          SELECT u.id, u.nombre_usuario, u.email, u.contrasena, u.rol_id, r.nombre_rol
+          FROM usuarios u
+          JOIN roles r ON u.rol_id = r.id
+          WHERE u.email = ? AND u.activo = 1
+        `;
+        const [usuarios] = await pool.query(query, [email]);
 
-    // Verificar la contraseña
-    const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
-    if (!esValida) {
-      return res.status(401).json({ message: 'Contraseña incorrecta' });
+        if (usuarios.length === 0) {
+            return res.status(401).json({ message: 'Credenciales inválidas o usuario inactivo.' });
+        }
+
+        const usuario = usuarios[0];
+        const esValida = await bcrypt.compare(contrasena, usuario.contrasena);
+        if (!esValida) {
+            return res.status(401).json({ message: 'Credenciales inválidas.' });
+        }
+
+        // --- MEJORA CLAVE ---
+        // Nos aseguramos que el payload del token y el objeto de usuario devuelto contengan toda la información necesaria.
+        const payload = {
+            id: usuario.id,
+            nombre_usuario: usuario.nombre_usuario,
+            rol_id: usuario.rol_id, // Incluimos el ID del rol
+            rol_nombre: usuario.nombre_rol
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            token,
+            usuario: payload // Devolvemos el mismo payload
+        });
+
+    } catch (error) {
+        console.error('Error en el login:', error);
+        res.status(500).json({ message: 'Error al iniciar sesión' });
     }
+};
 
-    // Crear el token JWT
-    const token = jwt.sign(
-      { id: usuario.id, nombre_usuario: usuario.nombre_usuario, rol_id: usuario.rol_id },
-      process.env.JWT_SECRET,  // La clave secreta debe estar en el archivo .env
-      { expiresIn: '1h' }  // El token expira en 1 hora
-    );
+// @desc    Maneja la petición de "Olvidé mi contraseña"
+// @route   POST /api/auth/forgot-password
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    try {
+        const [users] = await pool.query('SELECT * FROM usuarios WHERE email = ? AND activo = 1', [email]);
+        if (users.length === 0) {
+            // Nota de seguridad: No revelamos si el email existe o no.
+            return res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' });
+        }
+        const user = users[0];
 
-    // Enviar el token al cliente
-    res.json({ token,
-       usuario: {
-    id: usuario.id,
-    nombre_usuario: usuario.nombre_usuario,
-    rol_id: usuario.rol_id
-  }
-    });
-  } catch (error) {
-      console.error('Error en register:', error);
-    res.status(500).json({ message: 'Error al realizar login' });
-  }
+        // Generar un token de reseteo
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+        
+        // El token expira en 10 minutos
+        const tokenExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+        // Guardar el token hasheado y la fecha de expiración en la base de datos
+        await pool.query(
+            'UPDATE usuarios SET reset_token = ?, reset_token_expires = ? WHERE id = ?',
+            [hashedToken, tokenExpires, user.id]
+        );
+
+        // Crear la URL de reseteo (asegúrate que el frontend corre en el puerto 3001)
+        const resetUrl = `http://localhost:3001/reset-password/${resetToken}`;
+        
+        // Enviar el correo
+        await sendEmail({
+            to: user.email,
+            subject: 'Restablecimiento de Contraseña - Stocket App',
+            html: `<p>Has solicitado restablecer tu contraseña. Por favor, haz clic en el siguiente enlace (válido por 10 minutos) para continuar:</p>
+                   <a href="${resetUrl}">${resetUrl}</a>`
+        });
+
+        res.status(200).json({ message: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error en el servidor.' });
+    }
+};
+
+
+exports.resetPassword = async (req, res) => {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    try {
+        const [users] = await pool.query(
+            'SELECT * FROM usuarios WHERE reset_token = ? AND reset_token_expires > NOW()',
+            [hashedToken]
+        );
+
+        if (users.length === 0) {
+            return res.status(400).json({ message: 'El token es inválido o ha expirado.' });
+        }
+        const user = users[0];
+
+        // Encriptar la nueva contraseña
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Actualizar la contraseña y limpiar los campos de reseteo
+        await pool.query(
+            'UPDATE usuarios SET contrasena = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
+            [hashedPassword, user.id]
+        );
+
+        res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Error en el servidor.' });
+    }
 };

@@ -1,83 +1,105 @@
-/* App.css */
+/* Contenido para: Frontend/src/styles/App.css */
 
-/* Contenedor principal para centrar el contenido */
-.welcome-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-image: url('/public/img/Home/empanadas_Login.avif');
-     background-repeat: no-repeat;
-     background-size: cover;
-    background-position: center;
-    text-align: center;
-    padding: 20px;
-  }
-.cards {
-    background-color: rgba(82, 79, 79, 0.274);
-  padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 400px;
-  margin: 20px;
-  /*columna botones*/
-  display: flex;
-  flex-direction: column;
+/* --- TEMA Y VARIABLES GLOBALES DE COLOR --- */
+/* Se definen las variables que faltaban para que el diseño funcione */
+:root {
+  --color-primario: #3498db; /* Azul moderno y accesible */
+  --color-primario-dark: #2980b9; /* Tono más oscuro para hover */
+  --color-secundario: #2c3e50; /* Azul oscuro/gris para texto principal */
+  --color-fondo: #f4f7f9;      /* Gris muy claro para el fondo */
+  --color-superficie: #ffffff; /* Blanco para las tarjetas y elementos elevados */
+  --color-borde: #dfe6e9;       /* Gris claro para bordes sutiles */
+  --color-texto-principal: #34495e;
+  --color-texto-secundario: #7f8c8d;
+  --sombra-caja: 0 10px 25px rgba(0, 0, 0, 0.08); /* Sombra suave y moderna */
+  --radio-borde: 8px; /* Bordes ligeramente redondeados */
 }
 
-  
-  /* Estilo para el título */
-  h2.titulo{
-    font-size: 2rem;
-    color: #ffffff; /* Color oscuro para el título */
-    margin-bottom: 10px;
-  }
-  
-  /* Estilo para el párrafo */
-  p {
-    font-size: 1.2rem;
-    color: #ffffff; /* Color de texto más suave */
-    margin-bottom: 30px;
-  }
-  
-  /* Estilos para los botones */
- 
-  button{
-    width: 200px;
-    padding: 5px 5px;
-    border: none;
+/* --- ESTILOS DE RESET BÁSICOS --- */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-fondo);
+  color: var(--color-texto-principal);
+}
+
+* {
+  box-sizing: border-box;
+}
 
 
-  }
-  /* Botón primario */
-  .boton_inicio {
-    background-color: #834e00;
-    margin:5px auto;
-    border-radius: 10px;  
-    color: white;
-  
-    
-  }
-  
-  /* Botón secundario */
-  .boton_registro{
-    background-color: #834e00;
-    margin:  5px auto;
-    border-radius: 10px;  /* Verde */
-    color: white;
-  }
-  
-  /* Efecto al pasar el mouse sobre los botones */
-  button:hover {
-    opacity: 0.8; /* Efecto de transparencia al pasar el ratón */
-  }
-  .logoEM {
-    width: 130px;
-    height: auto;
-    margin: 0 auto 20px auto;
-    margin-bottom: 20px;
-    border-radius: 10px; /* opcional: si quieres que tenga esquinas redondeadas */
-  }
-  
+/* --- ESTILOS DE LAYOUT PRINCIPAL (para el dashboard) --- */
+.main-content {
+  transition: margin-left 0.4s ease;
+  padding: 30px;
+}
+
+.main-content.sidebar-open {
+  margin-left: 250px;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+
+/* --- CLASES DE AYUDA GLOBALES --- */
+.page-container {
+  background-color: var(--color-superficie);
+  padding: 25px 30px;
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--color-borde);
+  padding-bottom: 20px;
+  margin-bottom: 30px;
+}
+
+.page-header h2 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-secundario);
+}
+
+.acciones-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.btn-accion {
+  width: 35px;
+  height: 35px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.btn-accion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.btn-accion i {
+  font-size: 0.9rem;
+}
+
+.titulo-principal {
+  color: #2c3e50; /* Azul oscuro elegante */
+  font-weight: bold;
+}

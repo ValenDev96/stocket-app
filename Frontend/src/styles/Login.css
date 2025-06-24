@@ -1,76 +1,143 @@
-/* Estilos para Login */
+/* Contenido para: Frontend/src/styles/Login.css */
+
 .login-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-image: url('/public/img/Home/empanadas_Login.avif');
-     background-repeat: no-repeat;
-     background-size: cover;
-    background-position: center;
-    text-align: center;
-    padding: 20px;
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  background-color: var(--color-fondo); /* Asegura un color de fondo consistente */
 }
-  
-  .login-card {
-    background-color:rgba(255, 255, 255, 0.274);
-    padding: 2rem;
-    border-radius: 8px;
-    width: 350px;
-  }
-  
-  .login-card h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-    color: rgb(255, 245, 245);
-  }
-  
-  .form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    color: #ffffff;
-  }
-  
-  .form-group input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-  }
-  
-  .login-button-int {
-    width: 100%;
-    padding: 0.75rem;
-    background-color: #834e00;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
-  
-  .login-button-int:hover {
-    background-color: #834e00;
-  }
-  
-  .forgot-password {
-    text-align: center;
-    margin-top: 1rem;
-  }
-  
-  .forgot-password a {
-    color: #ffe3ba;
-    text-decoration: none;
-    font-size: 0.9rem;
-  }
-  
-  .forgot-password a:hover {
-    text-decoration: underline;
-  }
-  
+
+/* Columna Izquierda: Branding */
+.login-branding {
+  flex: 1.2; /* Ligeramente más grande que el formulario */
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
+
+.login-branding-overlay {
+  background-color: rgba(0, 0, 0, 0.55);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.login-logo {
+  font-size: 4.5rem; /* Un poco más grande para mayor impacto */
+  font-weight: 700;
+  text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.7);
+  margin-bottom: 1rem;
+}
+
+.login-tagline {
+  font-size: 1.5rem;
+  font-weight: 300;
+  text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Columna Derecha: Formulario */
+.login-form-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px; /* Un poco más de espacio */
+  background: var(--color-superficie);
+  padding: 3rem;
+  border-radius: var(--radio-borde);
+  box-shadow: var(--sombra-caja);
+}
+
+.login-card h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: var(--color-secundario);
+  font-size: 2rem; /* Tamaño de fuente claro */
+  font-weight: 600;
+}
+
+.login-card .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.login-card .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-texto-secundario);
+}
+
+.login-card .form-group .form-control {
+  width: 100%;
+  padding: 0.9rem 1rem; /* Un poco más alto */
+  border: 1px solid var(--color-borde);
+  border-radius: var(--radio-borde);
+  background-color: var(--color-fondo); /* Fondo sutil para el input */
+  transition: all 0.2s ease-in-out;
+  font-size: 1rem;
+}
+
+.login-card .form-group .form-control:focus {
+  outline: none;
+  border-color: var(--color-primario);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: var(--radio-borde);
+  background-color: var(--color-primario);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-login:disabled {
+  background-color: #a3a3a3;
+  cursor: not-allowed;
+}
+
+.btn-login:hover:not(:disabled) {
+  background-color: var(--color-primario-dark);
+  transform: translateY(-2px); /* Efecto de elevación */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.forgot-password-link {
+  color: var(--color-texto-secundario);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.forgot-password-link:hover {
+  color: var(--color-primario);
+  text-decoration: underline;
+}

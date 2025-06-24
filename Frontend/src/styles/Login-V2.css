@@ -1,0 +1,161 @@
+.login-page {
+  --color-fondo: #71886293;
+  display: flex;
+  flex-direction: column; /* Mantenemos la dirección vertical */
+  align-items: center;
+  min-height: 100vh; /* Ocupa al menos toda la altura de la pantalla */
+  width: 100%;
+  background-color: var(--color-fondo, #f4f7f9);
+  
+  /* El padding se ajusta para dar espacio al logo y al footer */
+  padding: 80px 20px 0 20px; 
+}
+
+.login-card-v2 {
+  position: relative;
+  background: var(--color-superficie, #ffffff);
+  width: 100%;
+  max-width: 450px;
+  padding: 70px 40px 40px 40px; 
+  border-radius: var(--radio-borde, 12px);
+  box-shadow: var(--sombra-caja, 0 10px 30px rgba(0, 0, 0, 0.1));
+  text-align: center;
+  /* El margen inferior se elimina para que el layout sea controlado por flexbox */
+}
+
+.logo-container {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--color-superficie, #ffffff);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.logo-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.card-header {
+  margin-bottom: 2rem;
+}
+.card-header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--color-secundario, #2c3e50);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+.card-header p {
+  margin: 0;
+  color: var(--color-texto-secundario, #7f8c8d);
+}
+
+.login-form { text-align: left; }
+.form-group { margin-bottom: 1.5rem; }
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--color-texto-secundario, #7f8c8d);
+}
+.form-control {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-borde, #dfe6e9);
+  border-radius: var(--radio-borde, 8px);
+  background-color: var(--color-fondo, #f4f7f9);
+  transition: all 0.2s ease-in-out;
+  font-size: 1rem;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--color-primario, #3498db);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 0.9rem;
+  border: none;
+  border-radius: var(--radio-borde, 8px);
+  background: var(--color-primario, #3498db);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1rem;
+}
+.btn-login:hover:not(:disabled) {
+  background: var(--color-primario-dark, #2980b9);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.btn-login:disabled {
+  background-color: #a3a3a3;
+  cursor: not-allowed;
+}
+
+.card-footer { margin-top: 1.5rem; }
+.forgot-password-link {
+  color: var(--color-texto-secundario, #7f8c8d);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+.forgot-password-link:hover {
+  color: var(--color-primario, #3498db);
+  text-decoration: underline;
+}
+
+/* --- CORRECCIÓN 2: Se usa margin-top: auto para empujar el footer hacia abajo --- */
+.login-footer {
+  width: 100%;
+  padding: 1.5rem;
+  text-align: center;
+  color: #000000;
+  font-size: 0.85rem;
+  margin-top: auto; /* Esta es la clave: el footer toma todo el espacio vertical sobrante */
+}
+
+.login-footer p {
+  margin: 0.25rem 0;
+}
+
+.error-message {
+    color: #dc3545; /* Un color rojo estándar para errores */
+    font-size: 0.875em; /* Un poco más pequeño que el texto normal */
+    margin-top: 0.25rem;
+}
+
+/* Opcional: añade un borde rojo al input cuando hay un error */
+.form-control.is-invalid {
+    border-color: #dc3545;
+}
+
+.form-control.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+
+
+
+
+
+
+
+
+
+
+
