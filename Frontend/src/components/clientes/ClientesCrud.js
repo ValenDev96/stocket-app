@@ -162,7 +162,7 @@ const ClientesCrud = () => {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <div className="table-responsive">
-        <table className="table table-hover table-modern"> {/* Se usa la clase table-modern */}
+        <table className="table table-hover table-modern">
           <thead>
             <tr>
               <th>ID</th>

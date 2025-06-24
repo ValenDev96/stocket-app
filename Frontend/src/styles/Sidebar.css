@@ -1,24 +1,35 @@
+/* --- ESTRUCTURA PRINCIPAL DEL LAYOUT --- */
 .app-layout {
     display: flex;
     min-height: 100vh;
 }
 
+.main-content {
+    flex-grow: 1;
+    background-color: #f4f7f9;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+
+/* --- ESTILOS GENERALES DEL SIDEBAR --- */
 .sidebar {
+    width: 250px; /* Ancho por defecto del sidebar abierto */
     background-color: #2c3e50;
     color: #ecf0f1;
     display: flex;
     flex-direction: column;
+    height: 100vh; /* Ocupa el 100% de la altura de la pantalla */
     transition: width 0.3s ease;
-}
-
-.sidebar.open {
-    width: 250px;
+    position: sticky; /* Se asegura que se quede fijo */
+    top: 0;
 }
 
 .sidebar.collapsed {
     width: 80px;
 }
 
+/* --- CABECERA DEL SIDEBAR --- */
 .sidebar-header {
     display: flex;
     align-items: center;
@@ -32,6 +43,8 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 .sidebar.collapsed .sidebar-title {
@@ -46,8 +59,11 @@
     cursor: pointer;
 }
 
+
+/* --- NAVEGACIÓN PRINCIPAL (CON SCROLL) --- */
 .sidebar-nav {
-    flex-grow: 1;
+    flex-grow: 1; /* ¡Magia! Hace que esta sección ocupe todo el espacio disponible */
+    overflow-y: auto; /* Aplica scroll solo a esta sección si es necesario */
     padding-top: 1rem;
 }
 
@@ -76,11 +92,13 @@
 .nav-link i {
     font-size: 1.2rem;
     margin-right: 1rem;
-    width: 25px; /* Ancho fijo para alineación */
+    width: 25px; 
     text-align: center;
+    flex-shrink: 0;
 }
 
-.sidebar.collapsed .nav-link span {
+.sidebar.collapsed .nav-link span,
+.sidebar.collapsed .submenu-icon {
     display: none;
 }
 
@@ -88,7 +106,42 @@
     margin-right: 0;
 }
 
+
+/* --- SUBMENÚ DE REPORTES --- */
+.submenu {
+    padding-left: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.submenu-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    color: inherit;
+    width: 100%;
+    padding: 0.9rem 1.2rem;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.submenu-icon {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+}
+
+.sub-link {
+    padding-left: calc(1.2rem + 25px + 1rem); /* Alineado con el texto de los links principales */
+    font-size: 0.9rem;
+}
+
+
+/* --- PIE DE PÁGINA (FOOTER) DEL SIDEBAR --- */
 .sidebar-footer {
+    flex-shrink: 0; /* Evita que el footer se encoja */
     padding: 1rem;
     border-top: 1px solid #34495e;
 }
@@ -96,42 +149,58 @@
 .user-info {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
     padding: 0.5rem;
     border-radius: 8px;
     background-color: #34495e;
+    gap: 10px;
 }
 
 .sidebar.collapsed .user-info {
     justify-content: center;
 }
 
-.user-info i {
+.user-info i.fa-user-circle {
     font-size: 2rem;
-    margin-right: 10px;
 }
-
-.sidebar.collapsed .user-info i {
-    margin-right: 0;
-}
-
 
 .user-details {
+    flex-grow: 1; /* Ocupa el espacio entre el ícono de usuario y el botón de ayuda */
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
-.sidebar.collapsed .user-details {
+.sidebar.collapsed .user-details,
+.sidebar.collapsed .help-button-inline {
     display: none;
 }
 
 .user-name {
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .user-role {
     font-size: 0.8rem;
     color: #bdc3c7;
+    white-space: nowrap;
+}
+
+/* Botón de ayuda que está en la misma línea que el usuario */
+.help-button-inline {
+    color: #adb5bd;
+    font-size: 1.5rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.help-button-inline:hover {
+    color: #fff;
+}
+
+/* Contenedor del botón de logout */
+.footer-actions {
+    margin-top: 1rem;
 }
 
 .logout-button {
@@ -158,37 +227,18 @@
     display: none;
 }
 
-.main-content {
-    flex-grow: 1;
-    background-color: #f4f7f9;
-    padding: 2rem;
-    overflow-y: auto;
-}
 
-.submenu {
-    padding-left: 20px;
-    display: flex;
-    flex-direction: column;
+/* --- BARRA DE SCROLL PERSONALIZADA --- */
+.sidebar-nav::-webkit-scrollbar {
+  width: 6px;
 }
-
-.submenu-toggle {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: none;
-    border: none;
-    color: inherit;
-    width: 100%;
-    padding: 10px 15px;
-    cursor: pointer;
-    font: inherit;
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
 }
-
-.submenu-icon {
-    margin-left: auto;
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background-color: #445f7c;
+  border-radius: 10px;
 }
-
-.sub-link {
-    padding-left: 30px;
-    font-size: 0.9rem;
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background-color: #777;
 }

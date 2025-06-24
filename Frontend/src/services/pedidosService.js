@@ -66,7 +66,7 @@ export const crearPedido = async (pedidoData) => {
  */
 export const actualizarPedido = async (pedidoId, datosActualizados) => {
     // Asegúrate de que tu backend tenga una ruta PUT /api/pedidos/:id para manejar esta petición
-    const endpoint = `${API_URL_BASE}/pedidos/${pedidoId}`;
+    const endpoint = `${API_URL_BASE}/pedidos/${pedidoId}/estado`;
     const response = await fetch(endpoint, {
         method: 'PUT',
         headers: createAuthHeaders(),

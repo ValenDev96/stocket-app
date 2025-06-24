@@ -96,21 +96,15 @@ const Orders = () => {
                                         </Dropdown.Toggle>
 
                                         <Dropdown.Menu>
-                                            <Dropdown.Item onClick={() => cambiarEstadoPedido(pedido.id, 'en_proceso')} disabled={pedido.estado_pedido !== 'pendiente'}>
-                                                Marcar como "En Proceso"
-                                            </Dropdown.Item>
-                                            <Dropdown.Item onClick={() => cambiarEstadoPedido(pedido.id, 'listo_para_entrega')} disabled={pedido.estado_pedido !== 'en_proceso'}>
-                                                Marcar como "Listo para Entrega"
-                                            </Dropdown.Item>
                                             <Dropdown.Item onClick={() => cambiarEstadoPedido(pedido.id, 'completado')} disabled={pedido.estado_pedido !== 'listo_para_entrega'}>
                                                 Marcar como "Completado"
                                             </Dropdown.Item>
                                             <Dropdown.Divider />
                                             <Dropdown.Item onClick={() => cambiarEstadoPedido(pedido.id, 'cancelado')} className="text-danger" disabled={pedido.estado_pedido === 'completado' || pedido.estado_pedido === 'cancelado'}>
-                                                Cancelar Pedido
+                                                Cancelar pedido
                                             </Dropdown.Item>
-                                            <Dropdown.Item onClick={() => handleMarcarDevuelto(pedido.id)} className="text-danger" disabled={pedido.devuelto || pedido.estado_pedido !== 'completado'}>
-                                                Marcar como Devuelto
+                                            <Dropdown.Item onClick={() => handleMarcarDevuelto(pedido.id)} className="text-danger" disabled={pedido.devuelto || pedido.estado_pedido === 'completado'}>
+                                                Marcar como devuelto
                                             </Dropdown.Item>
                                         </Dropdown.Menu>
                                     </Dropdown>
