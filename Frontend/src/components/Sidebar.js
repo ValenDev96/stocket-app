@@ -18,11 +18,12 @@ const Sidebar = () => {
 
     if (!usuario) return null;
 
+    const esAdmin = usuario.rol_nombre === ROLES.ADMIN;
     const puedeVerInventarioYProveedores = [ROLES.ADMIN, ROLES.BODEGA, ROLES.AUXILIAR].includes(usuario.rol_nombre);
     const puedeVerProduccionYProductos = [ROLES.ADMIN, ROLES.PRODUCCION].includes(usuario.rol_nombre);
     const puedeVerPedidos = [ROLES.ADMIN, ROLES.PRODUCCION, ROLES.AUXILIAR].includes(usuario.rol_nombre);
     const puedeVerPagos = [ROLES.ADMIN, ROLES.AUXILIAR].includes(usuario.rol_nombre);
-    const esAdmin = usuario.rol_nombre === ROLES.ADMIN;
+    const puedeVerClientes = esAdmin || usuario.rol_nombre === ROLES.AUXILIAR;
 
     const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
     const toggleReportes = () => setReportesOpen(!reportesOpen);
@@ -87,7 +88,7 @@ const Sidebar = () => {
                     </NavLink>
                 )}
 
-                {(usuario.rol_nombre === ROLES.ADMIN || usuario.rol_nombre === ROLES.AUXILIAR) && (
+                {puedeVerClientes && (
                     <NavLink to="/clientes" className="nav-link">
                         <i className="fas fa-users"></i>
                         <span>Clientes</span>
@@ -95,16 +96,12 @@ const Sidebar = () => {
                 )}
 
                 {puedeVerPagos && (
-                    <NavLink
-                        to="/pagos"
-                        className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                    >
+                    <NavLink to="/pagos" className="nav-link">
                         <i className="fas fa-dollar-sign"></i>
                         <span>Pagos</span>
                     </NavLink>
                 )}
 
-                {/* ✅ Submenú de Reportes solo para Admin */}
                 {esAdmin && (
                     <>
                         <button onClick={toggleReportes} className="nav-link submenu-toggle">
@@ -124,33 +121,49 @@ const Sidebar = () => {
                                 </NavLink>
                             </div>
                         )}
-
                         <NavLink to="/admin/gestion-usuarios" className="nav-link">
-                            <i className="fas fa-users-cog"></i> {/* <-- Ícono cambiado */}
+                            <i className="fas fa-users-cog"></i>
                             <span>Admin Usuarios</span>
                         </NavLink>
-
-                        <NavLink to="/admin/auditoria" className="nav-link"> {/* <-- AÑADIR ENLACE */}
+                        <NavLink to="/admin/auditoria" className="nav-link">
                             <i className="fas fa-history"></i>
                             <span>Auditoría</span>
-                            </NavLink>
-
+                        </NavLink>
                     </>
                 )}
             </nav>
 
+            {/* --- SECCIÓN DEL FOOTER COMPLETAMENTE CORREGIDA --- */}
             <div className="sidebar-footer">
                 <div className="user-info">
                     <i className="fas fa-user-circle"></i>
-                    <div className="user-details">
-                        <span className="user-name">{usuario.nombre_usuario}</span>
-                        <span className="user-role">{usuario.rol_nombre}</span>
-                    </div>
+                    
+                    {isSidebarOpen && (
+                        <div className="user-details">
+                            <span className="user-name">{usuario.nombre_usuario}</span>
+                            <span className="user-role">{usuario.rol_nombre}</span>
+                        </div>
+                    )}
+
+                    {/* El botón de ayuda ahora está aquí, dentro de user-info */}
+                    {isSidebarOpen && (
+                         <a 
+                            href="/ManualDeUsuario.pdf" 
+                            download="Manual de Usuario - Stocket.pdf" 
+                            className="help-button-inline"
+                            title="Descargar Manual de Usuario"
+                        >
+                            <i className="fas fa-question-circle"></i>
+                        </a>
+                    )}
                 </div>
-                <button type="button" onClick={handleLogout} className="logout-button">
-                    <i className="fas fa-sign-out-alt"></i>
-                    <span>Cerrar Sesión</span>
-                </button>
+            
+                <div className="footer-actions">
+                    <button type="button" onClick={handleLogout} className="logout-button">
+                        <i className="fas fa-sign-out-alt"></i>
+                        {isSidebarOpen && <span>Cerrar Sesión</span>}
+                    </button>
+                </div>
             </div>
         </div>
     );

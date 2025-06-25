@@ -4,7 +4,6 @@ import { getPagos } from '../services/pagosService';
 import RegistrarPagoModal from '../components/Pagos/RegistrarPagoModal';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '../utils/formatters';
-// Importamos los iconos y los estilos modernos
 import { FaCalendarAlt, FaRedo } from 'react-icons/fa';
 import '../styles/providers.css'; // Asegúrate de que esta ruta sea correcta
 
@@ -20,8 +19,8 @@ const PagosPage = () => {
         fechaDesde: '',
         fechaHasta: ''
     });
-
-    // --- TODA LA LÓGICA DE JAVASCRIPT SE MANTIENE IGUAL ---
+    // --- REFACTORIZACIÓN: USO DE useCallback PARA fetchPagos ---
+    // Esto evita que se vuelva a crear la función en cada renderizado, mejorando el rendimiento
     const fetchPagos = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -92,7 +91,6 @@ const PagosPage = () => {
                 </div>
             </div>
 
-            {/* Tarjeta de Filtros con el nuevo estilo */}
             <div className="filter-card">
                 <h5 className="filter-title">Filtros de Búsqueda</h5>
                 <div className="filter-grid">
@@ -160,7 +158,6 @@ const PagosPage = () => {
                 </div>
             </div>
 
-            {/* Tabla de Pagos */}
             <div className="table-responsive">
                 <table className="table table-hover table-modern">
                     <thead>
@@ -168,12 +165,12 @@ const PagosPage = () => {
                             <th>ID Pago</th>
                             <th>ID Pedido</th>
                             <th>Monto</th>
-                            <th>Fecha Pago</th>
+                            <th>Fecha pago</th>
                             <th>Método</th>
-                            <th>Total Pedido</th>
-                            <th>Total Pagado</th>
-                            <th>Saldo Pendiente</th>
-                            <th>Estado Pedido</th>
+                            <th>Total pedido</th>
+                            <th>Total pagado</th>
+                            <th>Saldo pendiente</th>
+                            <th>Estado pedido</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -182,12 +179,12 @@ const PagosPage = () => {
                                 <tr key={pago.id}>
                                     <td>{pago.id}</td>
                                     <td>{pago.pedido_id}</td>
-                                    <td>{formatCurrency(pago.monto)}</td> {/* <-- CORREGIDO */}
+                                    <td>{formatCurrency(pago.monto)}</td> 
                                     <td>{new Date(pago.fecha_pago).toLocaleString()}</td>
                                     <td>{pago.metodo_pago}</td>
-                                    <td>{formatCurrency(pago.total_pedido)}</td> {/* <-- CORREGIDO */}
-                                    <td>{formatCurrency(pago.total_pagado_pedido_calculado)}</td> {/* <-- CORREGIDO */}
-                                    <td>{formatCurrency(pago.saldo_pendiente_pedido_calculado)}</td> {/* <-- CORREGIDO */}
+                                    <td>{formatCurrency(pago.total_pedido)}</td> 
+                                    <td>{formatCurrency(pago.total_pagado_pedido_calculado)}</td> 
+                                    <td>{formatCurrency(pago.saldo_pendiente_pedido_calculado)}</td> 
                                     <td>
                                       <span className={`badge bg-${pago.estado_pedido_actual === 'completado' ? 'success' : 'danger'}`}>
                                         {pago.estado_pedido_actual}
@@ -204,7 +201,6 @@ const PagosPage = () => {
                 </table>
             </div>
 
-            {/* Modal de Registro de Pago (sin cambios) */}
             {showRegistroModal && (
                 <RegistrarPagoModal
                     onClose={handleCloseRegistroModal}

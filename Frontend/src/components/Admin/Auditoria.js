@@ -2,10 +2,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { getAuditoriaLogs } from '../../services/adminService';
-import '../../styles/providers.css'; // Reutilizamos los estilos que ya tienes
+import '../../styles/providers.css'; 
 
 const Auditoria = () => {
-    // --- 1. CORRECCIÓN EN LA DECLARACIÓN DEL ESTADO ---
     // Se declara 'logs' para poder usarlo, y 'setLogs' para poder actualizarlo.
     const [logs, setLogs] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -33,17 +32,16 @@ const Auditoria = () => {
         } finally {
             setCargando(false);
         }
-    // --- 2. CORRECCIÓN DE DEPENDENCIA FALTANTE ---
     // Se añade 'setLogs' al array de dependencias para cumplir la regla de Eslint.
     }, [filters, setLogs]);
 
-    // Dejamos este useEffect para que haga una carga inicial de datos al montar el componente.
+    // Se deja este useEffect para que haga una carga inicial de datos al montar el componente.
     useEffect(() => {
         fetchLogs();
     }, [fetchLogs]);
 
     const handleApplyFilters = () => {
-        fetchLogs();
+        fetchLogs();    
     };
 
     return (
@@ -57,15 +55,15 @@ const Auditoria = () => {
                 <div className="filter-grid">
                     <div className="filter-item">
                         <label htmlFor="fechaDesde">Fecha Desde</label>
-                        <input type="date" name="fechaDesde" value={filters.fechaDesde} onChange={handleFilterChange} className="form-control" />
+                        <input type="date" id="fechaDesde" name="fechaDesde" value={filters.fechaDesde} onChange={handleFilterChange} className="form-control" />
                     </div>
                     <div className="filter-item">
                         <label htmlFor="fechaHasta">Fecha Hasta</label>
-                        <input type="date" name="fechaHasta" value={filters.fechaHasta} onChange={handleFilterChange} className="form-control" />
+                        <input type="date" id="fechaHasta" name="fechaHasta" value={filters.fechaHasta} onChange={handleFilterChange} className="form-control" />
                     </div>
                     <div className="filter-item">
                         <label htmlFor="limit">Mostrar Registros</label>
-                        <select name="limit" value={filters.limit} onChange={handleFilterChange} className="form-select">
+                        <select id="limit" name="limit" value={filters.limit} onChange={handleFilterChange} className="form-select">
                             <option value="25">Últimos 25</option>
                             <option value="50">Últimos 50</option>
                             <option value="100">Últimos 100</option>
