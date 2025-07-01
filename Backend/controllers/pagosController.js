@@ -1,10 +1,7 @@
-const pool = require('../config/db'); // Asume que db.js está en '../config/db'
-// Si tu archivo db.js está en otra ruta (ej. 'ruta/a/db'), ajústala.
+const pool = require('../config/db'); 
 
 // Función auxiliar para calcular saldo pendiente de un pedido
-// Esta función simulará la lógica que necesitas.
-// DEBES TENER UNA TABLA 'pedidos' CON 'id' Y 'total_pedido'
-// Y UNA TABLA 'pagos' CON 'id', 'pedido_id', 'monto'
+
 async function calcularSaldoPedido(pedidoId) {
     // 1. Obtener el total del pedido
     const [pedidoRows] = await pool.query('SELECT id, total_pedido, estado_pedido FROM pedidos WHERE id = ?', [pedidoId]);

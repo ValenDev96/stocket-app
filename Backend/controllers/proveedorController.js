@@ -32,49 +32,79 @@ exports.obtenerProveedorPorId = async (req, res) => {
 
 // --- Crear nuevo proveedor ---
 exports.registrarProveedor = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const { nombre, informacion_contacto, direccion } = req.body;
+    const usuario_id = req.usuario.id;
 
     if (!nombre || !informacion_contacto) {
       return res.status(400).json({ message: "Nombre e información de contacto son obligatorios." });
     }
 
     const query = `INSERT INTO proveedores (nombre, informacion_contacto, direccion, is_active) VALUES (?, ?, ?, true)`;
-    const [result] = await pool.query(query, [nombre, informacion_contacto, direccion || null]);
+    const [result] = await connection.query(query, [nombre, informacion_contacto, direccion || null]);
+    const nuevoProveedorId = result.insertId;
 
-    res.status(201).json({ message: 'Proveedor registrado exitosamente', id: result.insertId });
+    // --- AUDITORÍA ---
+    const detallesAuditoria = `Usuario (ID: ${usuario_id}) creó el proveedor '${nombre}' (ID: ${nuevoProveedorId}).`;
+    await connection.query(
+      'INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)',
+      [usuario_id, 'CREAR', 'proveedores', nuevoProveedorId, detallesAuditoria]
+    );
+
+    await connection.commit();
+    res.status(201).json({ message: 'Proveedor registrado exitosamente', id: nuevoProveedorId });
+
   } catch (error) {
+    await connection.rollback();
     if (error.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ message: 'Ya existe un proveedor con ese nombre o contacto.' });
     }
     console.error('Error al registrar proveedor:', error);
     res.status(500).json({ error: "Error interno al registrar proveedor" });
+  } finally {
+    if (connection) connection.release();
   }
 };
+
 
 // --- Actualizar proveedor ---
 exports.actualizarProveedor = async (req, res) => {
+  const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const { id } = req.params;
     const { nombre, informacion_contacto, direccion, is_active } = req.body;
+    const usuario_id = req.usuario.id;
 
-    const [result] = await pool.query(
+    const [result] = await connection.query(
       `UPDATE proveedores SET nombre = ?, informacion_contacto = ?, direccion = ?, is_active = ? WHERE id = ?`,
       [nombre, informacion_contacto, direccion || null, is_active !== undefined ? is_active : true, id]
     );
+    if (result.affectedRows === 0) throw new Error('Proveedor no encontrado.');
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Proveedor no encontrado.' });
-    }
-
+    // --- AUDITORÍA ---
+    const detallesAuditoria = `Usuario (ID: ${usuario_id}) actualizó el proveedor con ID: ${id}.`;
+    await connection.query(
+      'INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)',
+      [usuario_id, 'ACTUALIZAR', 'proveedores', id, detallesAuditoria]
+    );
+    
+    await connection.commit();
     res.json({ message: 'Proveedor actualizado correctamente.' });
+
   } catch (error) {
+    await connection.rollback();
     console.error('Error al actualizar proveedor:', error);
-    res.status(500).json({ message: 'Error al actualizar proveedor.' });
+    const statusCode = error.message.includes('encontrado') ? 404 : 500;
+    res.status(statusCode).json({ message: error.message || 'Error al actualizar proveedor.' });
+  } finally {
+    if(connection) connection.release();
   }
 };
 
-// --- Inactivar proveedor (soft delete) ---
+// --- Inactivar proveedor ---
 exports.inactivarProveedor = async (req, res) => {
   try {
     const { id } = req.params;

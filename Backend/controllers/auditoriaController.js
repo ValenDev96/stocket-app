@@ -1,5 +1,3 @@
-// Contenido para: Backend/controllers/auditoriaController.js
-
 const pool = require('../config/db');
 
 /**

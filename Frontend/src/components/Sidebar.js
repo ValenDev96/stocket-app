@@ -148,7 +148,7 @@ const Sidebar = () => {
                     {/* El botón de ayuda ahora está aquí, dentro de user-info */}
                     {isSidebarOpen && (
                          <a 
-                            href="/ManualDeUsuario.pdf" 
+                            href="ManualDeUsuario.pdf" 
                             download="Manual de Usuario - Stocket.pdf" 
                             className="help-button-inline"
                             title="Descargar Manual de Usuario"
