@@ -140,7 +140,7 @@ const GestionProduccion = () => {
   return (
     <div className="gestion-proveedores-page">
       <div className="page-header-modern">
-        <h2>Gestión de Producción</h2>
+        <h2>Gestión de producción</h2>
       </div>
 
       {/* Tarjeta de Pedidos Pendientes */}
