@@ -1,5 +1,3 @@
-// Contenido 100% corregido para: Backend/controllers/comprasController.js
-
 const pool = require('../config/db');
 
 exports.registrarCompra = async (req, res) => {
@@ -8,7 +6,7 @@ exports.registrarCompra = async (req, res) => {
     await connection.beginTransaction();
 
     const { materia_prima_id, proveedor_id, cantidad, precio_unitario, fecha_compra, fecha_expiracion } = req.body;
-    const usuario_id = req.usuario.id;
+    const usuario_id = req.usuario.id; // Obtenemos el ID del usuario que realiza la acción
 
     if (!materia_prima_id || !proveedor_id || !cantidad || !precio_unitario || !fecha_compra) {
       return res.status(400).json({ message: 'Faltan datos obligatorios.' });
@@ -27,8 +25,6 @@ exports.registrarCompra = async (req, res) => {
 
     const costo_compra = parseFloat(cantidad) * parseFloat(precio_unitario);
 
-    // --- CORRECCIÓN AQUÍ ---
-    // Se ha añadido el campo `proveedor_id` a la inserción en la tabla de lotes.
     const loteInsertQuery = `
       INSERT INTO lotes_materias_primas 
       (materia_prima_nombre, proveedor_id, cantidad_ingresada, stock_lote, costo_compra, fecha_expiracion) 
@@ -38,16 +34,23 @@ exports.registrarCompra = async (req, res) => {
     const [loteResult] = await connection.query(loteInsertQuery, loteValues);
     const nuevoLoteId = loteResult.insertId;
 
-    // Insertar el registro de la compra (sin cambios, ya estaba bien)
-    await connection.query(
+    // --- PASO 1: Capturamos el ID de la nueva compra para usarlo en la auditoría ---
+    const [compraResult] = await connection.query(
       'INSERT INTO compras_proveedores (proveedor_id, materia_prima_nombre, cantidad, precio_unitario, fecha_compra, lote_id, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [proveedor_id, materia_prima_nombre, cantidad, precio_unitario, fecha_compra, nuevoLoteId, usuario_id]
     );
+    const nuevaCompraId = compraResult.insertId;
 
-    // Registrar el movimiento de inventario (sin cambios, ya estaba bien)
     await connection.query(
       'INSERT INTO movimientos_inventario_mp (lote_id, tipo_movimiento, cantidad, descripcion, usuario_id) VALUES (?, ?, ?, ?, ?)',
       [nuevoLoteId, 'entrada', cantidad, `Entrada por compra al proveedor ID: ${proveedor_id}`, usuario_id]
+    );
+
+    // --- PASO 2: Insertamos el registro en la tabla de auditoría ---
+    const detallesAuditoria = `Se registró la compra #${nuevaCompraId} de ${cantidad} de ${materia_prima_nombre}.`;
+    await connection.query(
+        'INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)',
+        [usuario_id, 'CREAR', 'compras_proveedores', nuevaCompraId, detallesAuditoria]
     );
 
     await connection.commit();
@@ -59,9 +62,6 @@ exports.registrarCompra = async (req, res) => {
     const statusCode = error.message.includes('no existe') ? 404 : 500;
     res.status(statusCode).json({ message: error.message || 'Error interno del servidor al registrar la compra.' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 };
-
-// Asegúrate de que las otras funciones de tu controlador estén aquí también si las tienes.
-// Por ejemplo: obtenerProveedores, registrarProveedor, obtenerHistorialCompras, etc.

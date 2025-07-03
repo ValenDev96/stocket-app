@@ -50,6 +50,28 @@ const Orders = () => {
         }
     };
 
+    // --- 1. NUEVA FUNCIÓN PARA DETERMINAR EL TEXTO Y COLOR DEL BADGE ---
+    const getBadgeInfo = (pedido) => {
+        if (pedido.devuelto) {
+            return { text: 'Devuelto', colorClass: 'danger' };
+        }
+        
+        switch (pedido.estado_pedido) {
+            case 'completado':
+                return { text: 'Completado', colorClass: 'success' };
+            case 'listo_para_entrega':
+                return { text: 'Listo para Entrega', colorClass: 'info' };
+            case 'en_proceso':
+                return { text: 'En Proceso', colorClass: 'primary' };
+            case 'cancelado':
+                return { text: 'Cancelado', colorClass: 'danger' };
+            case 'pendiente':
+                return { text: 'Pendiente', colorClass: 'warning' };
+            default:
+                return { text: pedido.estado_pedido, colorClass: 'secondary' };
+        }
+    };
+
     if (loading) return <div className="text-center mt-5"><div className="spinner-border text-primary" role="status"></div></div>;
 
     return (
@@ -57,7 +79,7 @@ const Orders = () => {
             <div className="page-header">
                 <h2>Gestión de pedidos</h2>
                 <button onClick={() => navigate('/orders/new')} className="btn btn-primary">
-                    <i className="fas fa-plus me-2"></i>Crear Pedido
+                    <i className="fas fa-plus me-2"></i>Crear pedido
                 </button>
             </div>
             
@@ -67,8 +89,8 @@ const Orders = () => {
                         <tr>
                             <th>ID Pedido</th>
                             <th>Cliente</th>
-                            <th>Fecha Pedido</th>
-                            <th>Fecha Entrega</th>
+                            <th>Fecha pedido</th>
+                            <th>Fecha entrega</th>
                             <th>Total</th>
                             <th>Estado</th>
                             <th className="text-center">Acciones</th>
@@ -83,12 +105,16 @@ const Orders = () => {
                                 <td>{new Date(pedido.fecha_entrega_estimada).toLocaleDateString()}</td>
                                 <td>{formatCurrency(pedido.total_pedido)}</td>
                                 <td>
-                                    <span className={`badge bg-${pedido.estado_pedido === 'completado' ? 'success' : 'warning'}`}>
-                                        {pedido.estado_pedido}
-                                    </span>
-                                    {pedido.devuelto ? <span className="badge bg-danger ms-2">Devuelto</span> : ''}
+                                    {(() => {
+                                        // --- 2. LÓGICA DE ESTADO CORREGIDA Y SIMPLIFICADA ---
+                                        const badge = getBadgeInfo(pedido);
+                                        return (
+                                            <span className={`badge bg-${badge.colorClass}`}>
+                                                {badge.text}
+                                            </span>
+                                        );
+                                    })()}
                                 </td>
-                                {/* --- COLUMNA DE ACCIONES MEJORADA --- */}
                                 <td className="text-center">
                                     <Dropdown>
                                         <Dropdown.Toggle variant="light" size="sm" id="dropdown-basic">
@@ -103,8 +129,12 @@ const Orders = () => {
                                             <Dropdown.Item onClick={() => cambiarEstadoPedido(pedido.id, 'cancelado')} className="text-danger" disabled={pedido.estado_pedido === 'completado' || pedido.estado_pedido === 'cancelado'}>
                                                 Cancelar pedido
                                             </Dropdown.Item>
-                                            <Dropdown.Item onClick={() => handleMarcarDevuelto(pedido.id)} className="text-danger" disabled={pedido.devuelto || pedido.estado_pedido === 'completado'}>
-                                                Marcar como devuelto
+                                            <Dropdown.Item 
+                                                onClick={() => handleMarcarDevuelto(pedido.id)} 
+                                                className="text-danger" 
+                                                disabled={pedido.devuelto || pedido.estado_pedido === 'cancelado'}
+                                            >
+                                                Marcar como Devuelto
                                             </Dropdown.Item>
                                         </Dropdown.Menu>
                                     </Dropdown>

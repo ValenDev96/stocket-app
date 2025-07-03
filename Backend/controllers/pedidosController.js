@@ -3,10 +3,11 @@ const pool = require('../config/db');
 // Obtener todos los pedidos
 exports.obtenerTodos = async (req, res) => {
   try {
+    // --- CORRECCIÓN AQUÍ: Se añade p.devuelto a la consulta ---
     const query = `
-      SELECT p.id, p.fecha_pedido, p.fecha_entrega_estimada, p.estado_pedido, p.total_pedido, c.nombre as cliente_nombre
+      SELECT p.id, p.fecha_pedido, p.fecha_entrega_estimada, p.estado_pedido, p.total_pedido, p.devuelto, c.nombre as cliente_nombre
       FROM pedidos p
-      JOIN clientes c ON p.cliente_id = c.id
+      LEFT JOIN clientes c ON p.cliente_id = c.id
       ORDER BY p.fecha_pedido DESC;
     `;
     const [pedidos] = await pool.query(query);
@@ -109,6 +110,7 @@ exports.obtenerPendientes = async (req, res) => {
 exports.crear = async (req, res) => {
   const connection = await pool.getConnection();
   try {
+    const usuario_id = req.usuario.id;
     const { cliente_id, fecha_entrega_estimada, total_pedido, items } = req.body;
 
     if (!cliente_id || !fecha_entrega_estimada || !items || items.length === 0) {
@@ -117,90 +119,120 @@ exports.crear = async (req, res) => {
 
     await connection.beginTransaction();
 
-    // 1. Verificar el stock de todos los productos ANTES de hacer cualquier cambio
-    for (const item of items) {
-      const [productoRows] = await connection.query('SELECT stock FROM productos_terminados WHERE id = ? FOR UPDATE', [item.producto_terminado_id]);
-      if (productoRows.length === 0 || productoRows[0].stock < item.cantidad) {
-        throw new Error(`Stock insuficiente para el producto ID ${item.producto_terminado_id}.`);
-      }
-    }
-
-    // 2. Insertar el pedido en la tabla 'pedidos'
+    // 1. Insertar el pedido en la tabla 'pedidos' con estado 'pendiente'
+    // YA NO SE VERIFICA NI SE DESCUENTA EL STOCK AQUÍ.
     const [pedidoResult] = await connection.query(
       'INSERT INTO pedidos (cliente_id, fecha_entrega_estimada, estado_pedido, total_pedido) VALUES (?, ?, ?, ?)',
       [cliente_id, fecha_entrega_estimada, 'pendiente', total_pedido]
     );
     const nuevoPedidoId = pedidoResult.insertId;
 
-    // 3. Insertar cada item del pedido y actualizar el stock
+    // 2. Insertar cada item del pedido
     for (const item of items) {
-      // Insertar en 'items_pedido'
       await connection.query(
         'INSERT INTO items_pedido (pedido_id, producto_terminado_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)',
         [nuevoPedidoId, item.producto_terminado_id, item.cantidad, item.precio_unitario]
       );
-      // Actualizar el stock en 'productos_terminados'
-      await connection.query(
-        'UPDATE productos_terminados SET stock = stock - ? WHERE id = ?',
-        [item.cantidad, item.producto_terminado_id]
-      );
+      // LA LÍNEA QUE ACTUALIZABA EL STOCK HA SIDO ELIMINADA DE AQUÍ.
     }
+    
+    // 3. Auditoría
+    const detallesAuditoria = `Usuario (ID: ${usuario_id}) creó el pedido #${nuevoPedidoId} para el cliente ID ${cliente_id}.`;
+    await connection.query( 'INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)', [usuario_id, 'CREAR', 'pedidos', nuevoPedidoId, detallesAuditoria]);
 
     await connection.commit();
-    res.status(201).json({ message: 'Pedido creado exitosamente.', pedidoId: nuevoPedidoId });
+    res.status(201).json({ message: 'Pedido creado exitosamente y enviado a producción.', pedidoId: nuevoPedidoId });
 
   } catch (error) {
     await connection.rollback();
     console.error("Error al crear el pedido:", error);
-    // Devuelve un error 400 si el problema fue el stock, si no un 500
-    const statusCode = error.message.includes('Stock insuficiente') ? 400 : 500;
     res.status(statusCode).json({ message: error.message || 'Error interno del servidor.' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 };
+
 exports.actualizarEstado = async (req, res) => {
-  const { id } = req.params;
-  const { estado_pedido } = req.body;
+    const { id } = req.params;
+    const { estado_pedido } = req.body;
+    const usuario_id = req.usuario.id;
 
-  if (!estado_pedido) {
-    return res.status(400).json({ message: 'El nuevo estado del pedido es obligatorio.' });
-  }
-
-  try {
-    const [result] = await pool.query(
-      'UPDATE pedidos SET estado_pedido = ? WHERE id = ?',
-      [estado_pedido, id]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Pedido no encontrado.' });
+    if (!estado_pedido) {
+        return res.status(400).json({ message: 'El nuevo estado del pedido es obligatorio.' });
     }
-    res.status(200).json({ message: 'Estado del pedido actualizado exitosamente.' });
-  } catch (error) {
-    console.error("Error al actualizar estado del pedido:", error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        // Si el nuevo estado es 'completado', AHORA SÍ descontamos el stock.
+        if (estado_pedido === 'completado') {
+            const [items] = await connection.query('SELECT producto_terminado_id, cantidad FROM items_pedido WHERE pedido_id = ?', [id]);
+
+            for (const item of items) {
+                const [productoRows] = await connection.query('SELECT stock FROM productos_terminados WHERE id = ? FOR UPDATE', [item.producto_terminado_id]);
+                if (productoRows.length === 0 || productoRows[0].stock < item.cantidad) {
+                    throw new Error(`Stock insuficiente para completar el pedido del producto ID ${item.producto_terminado_id}.`);
+                }
+                await connection.query(
+                    'UPDATE productos_terminados SET stock = stock - ? WHERE id = ?',
+                    [item.cantidad, item.producto_terminado_id]
+                );
+            }
+        }
+
+        // Actualizamos el estado del pedido
+        const [result] = await connection.query('UPDATE pedidos SET estado_pedido = ? WHERE id = ?', [estado_pedido, id]);
+        if (result.affectedRows === 0) throw new Error('Pedido no encontrado.');
+
+        // Auditoría
+        const detallesAuditoria = `Usuario (ID: ${usuario_id}) cambió el estado del pedido #${id} a '${estado_pedido}'.`;
+        await connection.query('INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)',[usuario_id, 'ACTUALIZAR', 'pedidos', id, detallesAuditoria]);
+        
+        await connection.commit();
+        res.status(200).json({ message: 'Estado del pedido actualizado exitosamente.' });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al actualizar estado del pedido:", error);
+        const statusCode = error.message.includes('encontrado') || error.message.includes('insuficiente') ? 404 : 500;
+        res.status(statusCode).json({ message: error.message || 'Error interno del servidor.' });
+    } finally {
+        if(connection) connection.release();
+    }
 };
+
 exports.marcarComoDevuelto = async (req, res) => {
-  const { id } = req.params;
-  const { motivo_devolucion } = req.body;
+    const { id } = req.params;
+    const { motivo_devolucion } = req.body;
+    const usuario_id = req.usuario.id;
 
-  if (!motivo_devolucion) {
-    return res.status(400).json({ message: 'El motivo de la devolución es obligatorio.' });
-  }
-
-  try {
-    // Actualizamos los campos 'devuelto' y 'motivo_devolucion' y ponemos el estado como 'cancelado'
-    const [result] = await pool.query(
-      'UPDATE pedidos SET devuelto = 1, motivo_devolucion = ?, estado_pedido = ? WHERE id = ?',
-      [motivo_devolucion, 'cancelado', id]
-    );
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Pedido no encontrado.' });
+    if (!motivo_devolucion) {
+        return res.status(400).json({ message: 'El motivo de la devolución es obligatorio.' });
     }
-    res.status(200).json({ message: 'El pedido ha sido marcado como devuelto.' });
-  } catch (error) {
-    console.error("Error al marcar pedido como devuelto:", error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
+
+    const connection = await pool.getConnection();
+    try {
+        await connection.beginTransaction();
+        
+        const [result] = await connection.query(
+            'UPDATE pedidos SET devuelto = 1, motivo_devolucion = ?, estado_pedido = ? WHERE id = ?',
+            [motivo_devolucion, 'cancelado', id]
+        );
+        if (result.affectedRows === 0) throw new Error('Pedido no encontrado.');
+
+        const detallesAuditoria = `Pedido #${id} marcado como devuelto. Motivo: ${motivo_devolucion}.`;
+        await connection.query(
+            'INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, detalles) VALUES (?, ?, ?, ?, ?)',
+            [usuario_id, 'ACTUALIZAR', 'pedidos', id, detallesAuditoria]
+        );
+
+        await connection.commit();
+        res.status(200).json({ message: 'El pedido ha sido marcado como devuelto.' });
+    } catch (error) {
+        await connection.rollback();
+        console.error("Error al marcar pedido como devuelto:", error);
+        const statusCode = error.message.includes('encontrado') ? 404 : 500;
+        res.status(statusCode).json({ message: error.message || 'Error interno del servidor.' });
+    } finally {
+        if(connection) connection.release();
+    }
 };

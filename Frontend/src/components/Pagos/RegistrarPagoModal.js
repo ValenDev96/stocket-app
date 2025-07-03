@@ -1,24 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import Swal from 'sweetalert2'; // Para notificaciones
-import { registrarPago, obtenerPedidosPendientes } from '../../services/pagosService'; // Importa las funciones del servicio
+import Swal from 'sweetalert2';
+import { registrarPago, obtenerPedidosPendientes } from '../../services/pagosService';
+
+// --- 1. IMPORTAMOS LA FUNCIÓN DE FORMATO ---
+import { formatCurrency } from '../../utils/formatters';
+
 
 const RegistrarPagoModal = ({ onClose, onSave }) => {
     const [pagoData, setPagoData] = useState({
         pedido_id: '',
         monto: '',
-        metodo_pago: 'Efectivo', // Valor por defecto
+        metodo_pago: 'Efectivo',
     });
     const [pedidosPendientes, setPedidosPendientes] = useState([]);
     const [loadingPedidos, setLoadingPedidos] = useState(true);
     const [errorPedidos, setErrorPedidos] = useState(null);
 
-    // Carga los pedidos con saldo pendiente al montar el modal
     useEffect(() => {
         const fetchPedidos = async () => {
             try {
                 const data = await obtenerPedidosPendientes();
                 setPedidosPendientes(data);
-                // Si solo hay un pedido pendiente, seleccionarlo por defecto
                 if (data.length === 1) {
                     setPagoData(prev => ({ ...prev, pedido_id: data[0].id }));
                 }
@@ -40,25 +42,23 @@ const RegistrarPagoModal = ({ onClose, onSave }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            // Asegurarse de que el monto sea un número y positivo
             const montoNumerico = parseFloat(pagoData.monto);
             if (isNaN(montoNumerico) || montoNumerico <= 0) {
                 Swal.fire('Advertencia', 'El monto debe ser un número positivo.', 'warning');
                 return;
             }
 
-            // Opcional: Validar que el monto no exceda el saldo pendiente si se ha seleccionado un pedido
             const pedidoSeleccionado = pedidosPendientes.find(p => p.id === parseInt(pagoData.pedido_id));
             if (pedidoSeleccionado && montoNumerico > pedidoSeleccionado.saldo_pendiente) {
-                 Swal.fire('Advertencia', `El monto del pago ($${montoNumerico.toFixed(2)}) excede el saldo pendiente ($${pedidoSeleccionado.saldo_pendiente.toFixed(2)}) de este pedido.`, 'warning');
+                 // --- 2. APLICAMOS EL FORMATO EN EL MENSAJE DE ALERTA ---
+                 Swal.fire('Advertencia', `El monto del pago (${formatCurrency(montoNumerico)}) excede el saldo pendiente (${formatCurrency(pedidoSeleccionado.saldo_pendiente)}) de este pedido.`, 'warning');
                  return;
             }
 
-
-            await registrarPago({ ...pagoData, monto: montoNumerico }); // Envía el monto como número
+            await registrarPago({ ...pagoData, monto: montoNumerico });
             Swal.fire('¡Éxito!', 'Pago registrado exitosamente.', 'success');
-            onSave(); // Llama a la función para recargar la lista de pagos en el componente padre
-            onClose(); // Cierra el modal
+            onSave();
+            onClose();
         } catch (error) {
             Swal.fire('Error', error.message, 'error');
         }
@@ -88,12 +88,13 @@ const RegistrarPagoModal = ({ onClose, onSave }) => {
                                         value={pagoData.pedido_id}
                                         onChange={handleChange}
                                         required
-                                        disabled={pedidosPendientes.length === 0} // Deshabilita si no hay pedidos
+                                        disabled={pedidosPendientes.length === 0}
                                     >
                                         <option value="">Selecciona un pedido</option>
                                         {pedidosPendientes.map(pedido => (
                                             <option key={pedido.id} value={pedido.id}>
-                                                Pedido #{pedido.id} - Total: ${parseFloat(pedido.total_pedido).toFixed(2)} - Saldo Pendiente: ${parseFloat(pedido.saldo_pendiente).toFixed(2)}
+                                                {/* --- 3. APLICAMOS EL FORMATO EN LAS OPCIONES DEL SELECT --- */}
+                                                Pedido #{pedido.id} - Total: {formatCurrency(pedido.total_pedido)} - Saldo Pendiente: {formatCurrency(pedido.saldo_pendiente)}
                                             </option>
                                         ))}
                                     </select>
@@ -111,8 +112,8 @@ const RegistrarPagoModal = ({ onClose, onSave }) => {
                                     name="monto"
                                     value={pagoData.monto}
                                     onChange={handleChange}
-                                    step="0.01" // Permite decimales
-                                    min="0.01" // Asegura un monto positivo
+                                    step="0.01"
+                                    min="0.01"
                                     required
                                 />
                             </div>
@@ -130,7 +131,6 @@ const RegistrarPagoModal = ({ onClose, onSave }) => {
                                     <option value="Tarjeta">Tarjeta</option>
                                     <option value="Transferencia">Transferencia</option>
                                     <option value="Crédito">Crédito</option>
-                                    {/* Puedes añadir más métodos si los manejas en tu BD */}
                                 </select>
                             </div>
                             <div className="d-flex justify-content-end">

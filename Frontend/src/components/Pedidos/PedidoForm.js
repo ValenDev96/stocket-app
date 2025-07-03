@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
-// --- CORRECCIÓN: Se importan los servicios específicos ---
 import { crearPedido } from '../../services/pedidosService';
 import { obtenerTodos as obtenerProductosTerminados } from '../../services/productosTerminadosService';
 import { obtenerClientes } from '../../services/clientesService';
-// Se elimina la importación de 'api' ya que no se usará directamente
+
+// --- 1. IMPORTAMOS LA FUNCIÓN DE FORMATO ---
+import { formatCurrency } from '../../utils/formatters';
 
 const PedidoForm = () => {
   const navigate = useNavigate();
@@ -21,12 +21,10 @@ const PedidoForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cargandoDatos, setCargandoDatos] = useState(true);
 
-  // Cargar clientes y productos al montar el componente
   useEffect(() => {
     const cargarDatos = async () => {
       try {
         setCargandoDatos(true);
-        // --- CORRECCIÓN: Se usan las funciones de servicio en lugar de api.get() ---
         const [dataClientes, dataProductos] = await Promise.all([
           obtenerClientes(),
           obtenerProductosTerminados()
@@ -101,7 +99,7 @@ const PedidoForm = () => {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h2>Crear Nuevo Pedido</h2>
+        <h2>Crear nuevo pedido</h2>
         <button onClick={() => navigate('/orders')} className="btn btn-secondary">
           <i className="fas fa-arrow-left me-2"></i>Volver a Pedidos
         </button>
@@ -117,14 +115,14 @@ const PedidoForm = () => {
             </select>
           </div>
           <div className="col-md-6">
-            <label className="form-label">Fecha de Entrega Estimada</label>
+            <label className="form-label">Fecha de entrega estimada</label>
             <input type="date" className="form-control" value={fechaEntrega} onChange={(e) => setFechaEntrega(e.target.value)} required />
           </div>
         </div>
 
         <hr />
         
-        <h4>Productos del Pedido</h4>
+        <h4>Productos del pedido</h4>
         {items.map((item, index) => (
           <div key={index} className="row g-3 align-items-center mb-3">
             <div className="col-md-5">
@@ -140,11 +138,13 @@ const PedidoForm = () => {
             </div>
             <div className="col-md-2">
               <label className="form-label visually-hidden">Precio Unit.</label>
-              <input type="text" value={`$${parseFloat(item.precio_unitario).toFixed(2)}`} className="form-control" disabled />
+              {/* --- 2. APLICAMOS EL FORMATO AL PRECIO UNITARIO --- */}
+              <input type="text" value={formatCurrency(item.precio_unitario)} className="form-control" disabled />
             </div>
             <div className="col-md-2">
                 <label className="form-label visually-hidden">Subtotal</label>
-                <input type="text" value={`$${(item.cantidad * item.precio_unitario).toFixed(2)}`} className="form-control" disabled />
+                {/* --- 3. APLICAMOS EL FORMATO AL SUBTOTAL --- */}
+                <input type="text" value={formatCurrency(item.cantidad * item.precio_unitario)} className="form-control" disabled />
             </div>
             <div className="col-md-1 d-flex align-items-end">
               <button type="button" onClick={() => quitarItem(index)} className="btn btn-outline-danger"><i className="fas fa-trash"></i></button>
@@ -157,7 +157,8 @@ const PedidoForm = () => {
         </button>
 
         <div className="d-flex justify-content-end align-items-center">
-            <h3 className="me-4">Total: ${totalPedido.toFixed(2)}</h3>
+            {/* --- 4. APLICAMOS EL FORMATO AL TOTAL GENERAL --- */}
+            <h3 className="me-4">Total: {formatCurrency(totalPedido)}</h3>
             <button type="submit" className="btn btn-primary btn-lg" disabled={isSubmitting}>
               {isSubmitting ? 'Guardando...' : 'Guardar Pedido'}
             </button>
